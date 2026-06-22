@@ -903,30 +903,35 @@ let usingFallback = false;
 //   };
 // }
 
-function normalizeOpenfootballGame(raw) {
-  // Recherche des correspondances avec ton dictionnaire TEAMS existant pour récupérer les drapeaux (iso2)
-  const homeTeamName = raw.team1;
-  const awayTeamName = raw.team2;
-  
+function normalizeScoreBatGame(raw) {
+  const homeTeamName = raw.side1.name;
+  const awayTeamName = raw.side2.name;
+
+  // Recherche automatique des correspondances dans ton dictionnaire TEAMS
   let homeTeamObj = Object.values(TEAMS).find(t => t.name.toLowerCase() === homeTeamName.toLowerCase());
   let awayTeamObj = Object.values(TEAMS).find(t => t.name.toLowerCase() === awayTeamName.toLowerCase());
 
-  // Gestion des dates (Openfootball fournit "date" au format YYYY-MM-DD et parfois "time" en heure locale)
-  // On crée une date UTC de base (à affiner selon les vrais décalages si besoin)
-  const dateStr = raw.time ? `${raw.date}T${raw.time}:00Z` : `${raw.date}T18:00:00Z`;
-  const utcDate = new Date(dateStr);
+  const utcDate = new Date(raw.date);
 
-  const finished = raw.score1 !== null && raw.score2 !== null;
-  let status = finished ? 'final' : 'scheduled';
-
-  // Détection automatique de l'Algérie
-  const isHomeDZA = homeTeamObj && homeTeamObj.fifa === "ALG";
-  const isAwayDZA = awayTeamObj && awayTeamObj.fifa === "ALG";
+  // Détection du statut en direct via ScoreBat
+  let status = 'scheduled';
+  if (raw.isLive) status = 'in_progress';
+  
+  // Note : ScoreBat fournit les scores dans le titre sous la forme "Équipe 1 X - Y Équipe 2"
+  // On extrait les scores dynamiquement si le match a commencé
+  let scoreHome = null;
+  let scoreAway = null;
+  const scoreMatch = raw.title.match(/(\d+)\s*-\s*(\d+)/);
+  if (scoreMatch) {
+    scoreHome = parseInt(scoreMatch[1]);
+    scoreAway = parseInt(scoreMatch[2]);
+    if (!raw.isLive) status = 'final';
+  }
 
   return {
-    id: String(raw.num || Math.random()),
+    id: String(raw.id || Math.random()),
     status,
-    timeElapsed: '',
+    timeElapsed: raw.isLive ? 'En cours' : '',
     homeId: homeTeamObj ? Object.keys(TEAMS).find(k => TEAMS[k] === homeTeamObj) : '',
     awayId: awayTeamObj ? Object.keys(TEAMS).find(k => TEAMS[k] === awayTeamObj) : '',
     home: homeTeamObj ? homeTeamObj.fifa : '???',
@@ -937,14 +942,13 @@ function normalizeOpenfootballGame(raw) {
     awayIso: awayTeamObj ? awayTeamObj.iso2 : null,
     isPlaceholderHome: !homeTeamObj,
     isPlaceholderAway: !awayTeamObj,
-    scoreHome: raw.score1,
-    scoreAway: raw.score2,
-    group: raw.group || (homeTeamObj ? homeTeamObj.group : null),
-    matchday: raw.num,
+    scoreHome: scoreHome,
+    scoreAway: scoreAway,
+    group: homeTeamObj ? homeTeamObj.group : null,
     stage: 'group',
     stadium: null,
     utcDate,
-    isDZA: isHomeDZA || isAwayDZA
+    isDZA: (homeTeamObj && homeTeamObj.fifa === "ALG") || (awayTeamObj && awayTeamObj.fifa === "ALG")
   };
 }
 async function fetchJson(path) {
@@ -1002,51 +1006,44 @@ let lastFetchOk = false;
 // Nouvelle fonction de chargement ultra-simple
 async function loadData(isManual) {
   const btn = document.getElementById('refresh-btn');
-  if (isManual) btn.classList.add('spinning');
+  if (isManual && btn) btn.classList.add('spinning');
   try {
-    const res = await fetch(JSON_URL);
-    if (!res.ok) throw new Error('Impossible de charger le fichier des matchs');
-    const payload = await res.json();
+    // API en direct gratuite de ScoreBat (sans clé)
+    const res = await fetch('https://www.scorebat.com/video-api/v3/feed/');
+    if (!res.ok) throw new Error('Impossible de joindre le serveur de score en direct');
     
-    // Openfootball structure ses données par journées ("rounds") contenant des "matches"
-    let rawGames = [];
-    if (payload.rounds) {
-      payload.rounds.forEach(round => {
-        if (round.matches) {
-          round.matches.forEach(m => {
-            // On ajoute une propriété 'stage' selon le nom du round si nécessaire
-            m.stage = round.name; 
-            rawGames.push(m);
-          });
-        }
-      });
-    }
+    const data = await res.json();
+    const rawGames = data.response || [];
 
-    if (!rawGames.length) throw new Error('Aucun match trouvé');
+    // Filtrer pour ne garder que les matchs de la Coupe du Monde (World Cup)
+    const worldCupGames = rawGames.filter(match => 
+      match.competition.toLowerCase().includes('world cup') || 
+      match.competition.toLowerCase().includes('coupe du monde')
+    );
 
-    // Conversion des données vers ton format existant
-    games = rawGames.map(normalizeOpenfootballGame).filter(g => g.utcDate);
+    // Reconversion dynamique vers ton système
+    games = worldCupGames.map(normalizeScoreBatGame);
     lastFetchOk = true;
 
     document.getElementById('last-update').textContent =
-      'Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs chargés';
+      'En direct - Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs trouvés';
 
     populateGroupFilter();
     renderAll();
   } catch (error) {
-    console.error('Erreur :', error);
+    console.error('Erreur de flux en direct :', error);
     lastFetchOk = false;
     if (!games.length) {
       showGlobalError(error);
     } else {
       document.getElementById('last-update').textContent =
-        '⚠️ Échec de l\'actualisation (' + formatAlgTime(new Date()) + ')';
+        '⚠️ Erreur de reconnexion (' + formatAlgTime(new Date()) + ')';
     }
   } finally {
-    if (isManual) btn.classList.remove('spinning');
+    if (isManual && btn) btn.classList.remove('spinning');
   }
 }
-
+  
 function showGlobalError(error) {
   const msg = `
     <div class="error-msg">
