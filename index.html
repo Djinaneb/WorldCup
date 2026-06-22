@@ -1018,83 +1018,125 @@ let lastFetchOk = false;
 // Nouvelle fonction indispensable pour transformer les données d'api-football
 // vers le format attendu par votre interface (g.homeName, g.scoreHome, etc.)
 function normalizeApiFootballGame(raw) {
-  const fixture = raw.fixture;
-  const teams = raw.teams;
-  const goals = raw.goals;
-  const league = raw.league;
+  // Garde-fou : une entrée malformée ne doit jamais faire échouer tout
+  // le .map() (ce qui viderait silencieusement la liste "games").
+  try {
+    const fixture = raw.fixture || {};
+    const teams = raw.teams || {};
+    const goals = raw.goals || {};
+    const league = raw.league || {};
+    const home = teams.home || {};
+    const away = teams.away || {};
+    const status = fixture.status || {};
 
-  const utcDate = new Date(fixture.date);
+    const utcDate = fixture.date ? new Date(fixture.date) : null;
 
-  // Détection du statut (En cours, Terminé, Programmé)
-  let status = 'scheduled';
-  const shortStatus = fixture.status.short;
-  
-  // Statuts considérés comme "En direct" sur api-football
-  if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(shortStatus)) {
-    status = 'in_progress';
-  } else if (['FT', 'AET', 'PEN'].includes(shortStatus)) {
-    status = 'final';
+    // Détection du statut (En cours, Terminé, Programmé)
+    let gameStatus = 'scheduled';
+    const shortStatus = status.short;
+
+    // Statuts considérés comme "En direct" sur api-football
+    if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(shortStatus)) {
+      gameStatus = 'in_progress';
+    } else if (['FT', 'AET', 'PEN'].includes(shortStatus)) {
+      gameStatus = 'final';
+    }
+
+    // Extraction de la lettre du groupe (ex: "Group J" -> "J")
+    let groupLetter = null;
+    if (league.round && league.round.toLowerCase().includes('group')) {
+      const m = league.round.match(/Group\s+(\w)/i);
+      if (m) groupLetter = m[1].toUpperCase();
+    }
+
+    const homeName = home.name || '?';
+    const awayName = away.name || '?';
+
+    // Vérification si l'Algérie joue (soit par son nom, soit par l'ID de l'équipe 38)
+    const isDZA = homeName.toLowerCase().includes('alger') ||
+                  awayName.toLowerCase().includes('alger') ||
+                  home.id === 38 || away.id === 38;
+
+    return {
+      id: String(fixture.id ?? Math.random()),
+      status: gameStatus,
+      timeElapsed: status.elapsed ? String(status.elapsed) : '',
+      homeId: String(home.id ?? ''),
+      awayId: String(away.id ?? ''),
+      home: homeName.substring(0, 3).toUpperCase(), // Code 3 lettres par défaut
+      away: awayName.substring(0, 3).toUpperCase(),
+      homeName,
+      awayName,
+      homeIso: null,
+      awayIso: null,
+      homeLogoUrl: home.logo || null, // On stocke l'URL directe du logo
+      awayLogoUrl: away.logo || null, // On stocke l'URL directe du logo
+      isPlaceholderHome: false,
+      isPlaceholderAway: false,
+      scoreHome: goals.home ?? null,
+      scoreAway: goals.away ?? null,
+      group: groupLetter,
+      stage: groupLetter ? 'group' : 'knockout',
+      stadium: fixture.venue && fixture.venue.name ? { name: fixture.venue.name, city: fixture.venue.city } : null,
+      utcDate,
+      isDZA
+    };
+  } catch (e) {
+    console.warn('Match ignoré (données malformées) :', raw, e);
+    return { utcDate: null };
   }
-
-  // Extraction de la lettre du groupe (ex: "Group J" -> "J")
-  let groupLetter = null;
-  if (league.round && league.round.toLowerCase().includes('group')) {
-    const match = league.round.match(/Group\s+(\w)/i);
-    if (match) groupLetter = match[1].toUpperCase();
-  }
-
-  // Vérification si l'Algérie joue (soit par son nom, soit par l'ID de l'équipe 38)
-  const isDZA = teams.home.name.toLowerCase().includes('alger') || 
-                teams.away.name.toLowerCase().includes('alger') ||
-                teams.home.id === 38 || teams.away.id === 38;
-
-  return {
-    id: String(fixture.id),
-    status,
-    timeElapsed: fixture.status.elapsed ? String(fixture.status.elapsed) : '',
-    homeId: String(teams.home.id),
-    awayId: String(teams.away.id),
-    home: teams.home.name.substring(0, 3).toUpperCase(), // Code 3 lettres par défaut
-    away: teams.away.name.substring(0, 3).toUpperCase(),
-    homeName: teams.home.name,
-    awayName: teams.away.name,
-    homeIso: null, 
-    awayIso: null,
-    homeLogoUrl: teams.home.logo, // On stocke l'URL directe du logo
-    awayLogoUrl: teams.away.logo, // On stocke l'URL directe du logo
-    isPlaceholderHome: false,
-    isPlaceholderAway: false,
-    scoreHome: goals.home,
-    scoreAway: goals.away,
-    group: groupLetter,
-    stage: groupLetter ? 'group' : 'knockout',
-    stadium: fixture.venue && fixture.venue.name ? { name: fixture.venue.name, city: fixture.venue.city } : null,
-    utcDate,
-    isDZA: isDZA
-  };
 }
 
 async function loadData(isManual) {
   const btn = document.getElementById('refresh-btn');
   if (isManual && btn) btn.classList.add('spinning');
-  
-  const API_KEY = "Te194cd2d4c4ba83b2ed028f7a886e6b3"; 
-  const URL = "https://v3.football.api-sports.io/fixtures?league=1&season=2026"; 
+
+  const API_KEY = "Te194cd2d4c4ba83b2ed028f7a886e6b3";
+  // IMPORTANT : league=1 + season=2026 correspond à la Coupe du Monde 2026
+  // sur api-football, MAIS toutes les clés/abonnements n'y ont pas accès
+  // (plan gratuit = saisons/ligues limitées). Voir message d'erreur ci-dessous
+  // pour le diagnostic exact renvoyé par l'API elle-même.
+  const URL = "https://v3.football.api-sports.io/fixtures?league=1&season=2026";
 
   try {
     const response = await fetch(URL, {
       method: "GET",
       headers: {
-        "x-apisports-key": API_KEY,
-        "x-rapidapi-host": "v3.football.api-sports.io"
+        "x-apisports-key": API_KEY
+        // NB: l'en-tête "x-rapidapi-host" ne s'utilise QUE si vous appelez
+        // l'API via RapidAPI (host: api-football-v1.p.rapidapi.com).
+        // En appelant directement v3.football.api-sports.io, cet en-tête
+        // est inutile (et peut perturber certains proxys/CORS).
       }
     });
 
-    if (!response.ok) throw new Error('HTTP ' + response.status);
+    // On lit toujours le corps JSON, même en cas d'erreur HTTP, car
+    // api-football renvoie souvent un message d'erreur exploitable
+    // dans le corps (data.errors) plutôt qu'un simple code HTTP.
     const data = await response.json();
-    
+
+    // 1) Erreurs explicites renvoyées par l'API (clé invalide, quota
+    //    dépassé, paramètre non autorisé par votre plan, etc.)
+    if (data.errors && Array.isArray(data.errors) ? data.errors.length : Object.keys(data.errors || {}).length) {
+      const apiErrMsg = Array.isArray(data.errors)
+        ? data.errors.join(' · ')
+        : Object.entries(data.errors).map(([k, v]) => `${k}: ${v}`).join(' · ');
+      throw new Error('Erreur API-Football : ' + apiErrMsg);
+    }
+
+    // 2) Erreur HTTP générique (réseau, 500, etc.)
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    // 3) Réponse "vide" : la requête a fonctionné mais aucun fixture
+    //    pour ces paramètres league/season (souvent un souci de plan
+    //    d'abonnement ou de saison pas encore indexée par l'API).
     if (!data.response || !data.response.length) {
-      throw new Error('Aucun match retourné par l\'API');
+      throw new Error(
+        'Aucun match retourné par l\'API pour league=1 & season=2026. ' +
+        'Vérifiez que votre abonnement api-football inclut bien la ' +
+        'Coupe du Monde 2026 (league id 1) — sur le plan gratuit, ' +
+        'seules certaines ligues/saisons récentes sont accessibles.'
+      );
     }
 
     // CORRECT : On modifie la variable globale et on applique la normalisation
