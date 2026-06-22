@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coupe du Monde 2026 · Heure Algérienne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #006233;
+    --green-light: #00874a;
+    --gold: #c8a84b;
+    --gold-light: #e8c96a;
+    --red: #c1121f;
+    --bg: #0a0f0d;
+    --bg2: #111a14;
+    --bg3: #172118;
+    --card: #1a2a1d;
+    --card2: #1f321f;
+    --border: rgba(0,200,80,0.12);
+    --border2: rgba(200,168,75,0.2);
+    --text: #e8f5e9;
+    --text2: #8ba88c;
+    --text3: #5a7a5c;
+    --live: #ff3b30;
+    --live-glow: rgba(255,59,48,0.3);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* === HEADER === */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,15,13,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+  }
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    gap: 1rem;
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--gold);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .logo span { color: var(--text2); font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 400; margin-left: 8px; letter-spacing: 0; }
+  .alg-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .alg-time .flag { font-size: 16px; }
+  .alg-time .clock { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--gold); }
+
+  /* === TABS === */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    overflow-x: auto;
+  }
+  .tabs button {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* === MAIN === */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  /* === LOADING === */
+  .loading {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--green-light);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* === LIVE BADGE === */
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--live-glow);
+    border: 1px solid var(--live);
+    color: var(--live);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--live);
+    border-radius: 50%;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* === MATCH CARDS === */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    padding: 1.5rem 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .match-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 8px;
+    transition: border-color 0.15s;
+  }
+  .match-card:hover { border-color: rgba(0,200,80,0.22); }
+  .match-card.live-card {
+    border-color: rgba(255,59,48,0.3);
+    background: linear-gradient(to right, #1a2a1d, #221a1a);
+  }
+  .match-card.dzalg {
+    border-color: var(--green-light);
+    background: linear-gradient(to right, #1a2a1d, #0d1f15);
+  }
+  .match-card.dzalg .match-teams { color: var(--gold-light); }
+
+  .match-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .match-datetime { display: flex; align-items: center; gap: 6px; }
+  .match-datetime .tz { color: var(--green-light); font-weight: 500; }
+
+  .match-body {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+  }
+  .team-home { text-align: right; }
+  .team-away { text-align: left; }
+
+  .team-flag { font-size: 28px; line-height: 1; display: block; }
+  .team-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 4px;
+    white-space: nowrap;
+  }
+  .team-abbr { color: var(--text2); font-size: 11px; font-weight: 400; }
+
+  .score-block { text-align: center; }
+  .score-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 2px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .score-sep { color: var(--text3); }
+  .score-vs {
+    font-size: 14px;
+    color: var(--text3);
+    font-weight: 500;
+    padding: 0 4px;
+  }
+  .score-status { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* proba bar */
+  .proba-bar {
+    margin-top: 12px;
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 4px;
+  }
+  .proba-home { background: var(--green-light); }
+  .proba-draw { background: var(--text3); }
+  .proba-away { background: var(--gold); }
+  .proba-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+  .proba-labels .home-p { color: var(--green-light); }
+  .proba-labels .away-p { color: var(--gold); }
+
+  /* DZA highlight */
+  .dza-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--green-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(0,135,74,0.12);
+    border: 1px solid rgba(0,135,74,0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* Standings */
+  .standings-group {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .standings-group-header {
+    background: var(--card2);
+    padding: 10px 1rem;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .standings-table th {
+    padding: 6px 12px;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+  }
+  .standings-table th:first-child { text-align: left; }
+  .standings-table td {
+    padding: 10px 12px;
+    text-align: right;
+    border-bottom: 1px solid rgba(0,200,80,0.05);
+  }
+  .standings-table td:first-child { text-align: left; }
+  .standings-table tr:last-child td { border-bottom: none; }
+  .standings-table tr.dza-row td { color: var(--gold-light); }
+  .rank-num { color: var(--text3); font-size: 12px; margin-right: 6px; }
+  .qual-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green-light);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .qual-dot.elim { background: var(--red); }
+
+  /* Refresh button */
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--border2);
+    color: var(--gold);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: var(--card2); }
+  .refresh-btn svg { width: 14px; height: 14px; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .last-update { font-size: 11px; color: var(--text3); }
+
+  /* Error */
+  .error-msg {
+    background: rgba(193,18,31,0.1);
+    border: 1px solid rgba(193,18,31,0.3);
+    border-radius: var(--radius);
+    padding: 1rem;
+    color: #ff8a80;
+    font-size: 13px;
+    margin: 1rem 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .team-flag { font-size: 22px; }
+    .score-display { font-size: 28px; }
+    .team-name { font-size: 12px; }
+    .logo span { display: none; }
+    .alg-time { padding: 6px 8px; font-size: 12px; }
+    main { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">⚽ CdM 2026 <span>Heure Algérienne</span></div>
+    <div class="alg-time">
+      <span class="flag">🇩🇿</span>
+      <span class="clock" id="alg-clock">--:--:--</span>
+      <span style="color:var(--text3);font-size:11px">CET+1</span>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="active" onclick="switchTab('scores')">Scores &amp; Direct</button>
+  <button onclick="switchTab('upcoming')">Matchs à venir</button>
+  <button onclick="switchTab('dza')">🇩🇿 Algérie</button>
+</div>
+
+<main>
+  <div class="top-bar">
+    <span class="last-update" id="last-update">Chargement…</span>
+    <button class="refresh-btn" onclick="loadData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+        <path d="M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+        <path d="M8 16H3v5"/>
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <div id="panel-scores">
+    <div class="loading"><div class="spinner"></div>Chargement des matchs…</div>
+  </div>
+  <div id="panel-upcoming" style="display:none">
+    <div class="loading"><div class="spinner"></div>Chargement…</div>
+  </div>
+  <div id="panel-dza" style="display:none">
+    <div class="loading"><div class="spinner"></div>Chargement…</div>
+  </div>
+</main>
+
+<script>
+/* =====================================
+   CONFIG
+===================================== */
+const API_KEY = ''; // Laissé vide – voir note ci-dessous (mode demo / CORS proxy)
+const TZ_DZA = 'Africa/Algiers'; // UTC+1 (CET, pas de changement horaire en été)
+// L'Algérie est officiellement CET toute l'année (pas d'heure d'été)
+// UTC+1 en permanence
+
+/* =====================================
+   DONNÉES STATIQUES (mise à jour manuelle ou via proxy)
+   Remplissez avec vos données ou connectez un proxy CORS.
+   Source: api.sportradar.com/soccer/trial/v4/
+===================================== */
+
+// Données pré-chargées (snapshot actuel – à remplacer par appel API via proxy si besoin)
+const STATIC_DATA = {
+  lastUpdate: new Date().toISOString(),
+  games: [
+    // EN COURS
+    { id:"live1", status:"in_progress", home:"ARG", away:"AUT", homeName:"Argentine", awayName:"Autriche", scoreHome:1, scoreAway:0, utcTime:"2026-06-22T17:00:00Z" },
+    // TERMINÉS (récents)
+    { id:"f1", status:"final", home:"BRA", away:"HTI", homeName:"Brésil", awayName:"Haïti", scoreHome:3, scoreAway:0, utcTime:"2026-06-20T00:30:00Z" },
+    { id:"f2", status:"final", home:"TUR", away:"PAR", homeName:"Turquie", awayName:"Paraguay", scoreHome:0, scoreAway:1, utcTime:"2026-06-20T03:00:00Z" },
+    { id:"f3", status:"final", home:"NED", away:"SWE", homeName:"Pays-Bas", awayName:"Suède", scoreHome:5, scoreAway:1, utcTime:"2026-06-20T17:00:00Z" },
+    { id:"f4", status:"final", home:"GER", away:"CIV", homeName:"Allemagne", awayName:"Côte d'Ivoire", scoreHome:2, scoreAway:1, utcTime:"2026-06-20T20:00:00Z" },
+    { id:"f5", status:"final", home:"ECU", away:"CUW", homeName:"Équateur", awayName:"Curaçao", scoreHome:0, scoreAway:0, utcTime:"2026-06-21T00:00:00Z" },
+    { id:"f6", status:"final", home:"TUN", away:"JPN", homeName:"Tunisie", awayName:"Japon", scoreHome:0, scoreAway:4, utcTime:"2026-06-21T04:00:00Z" },
+    { id:"f7", status:"final", home:"ESP", away:"KSA", homeName:"Espagne", awayName:"Arabie Saoudite", scoreHome:4, scoreAway:0, utcTime:"2026-06-21T16:00:00Z" },
+    { id:"f8", status:"final", home:"BEL", away:"IRN", homeName:"Belgique", awayName:"Iran", scoreHome:0, scoreAway:0, utcTime:"2026-06-21T19:00:00Z" },
+    { id:"f9", status:"final", home:"URU", away:"CPV", homeName:"Uruguay", awayName:"Cap-Vert", scoreHome:2, scoreAway:2, utcTime:"2026-06-21T22:00:00Z" },
+    { id:"f10", status:"final", home:"NZL", away:"EGY", homeName:"Nouvelle-Zélande", awayName:"Égypte", scoreHome:1, scoreAway:3, utcTime:"2026-06-22T01:00:00Z" },
+    // À VENIR
+    { id:"s1", status:"scheduled", home:"FRA", away:"IRQ", homeName:"France", awayName:"Irak", scoreHome:null, scoreAway:null, utcTime:"2026-06-22T21:00:00Z", probHome:90.1, probDraw:7.1, probAway:2.8 },
+    { id:"s2", status:"scheduled", home:"NOR", away:"SEN", homeName:"Norvège", awayName:"Sénégal", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T00:00:00Z", probHome:43, probDraw:27.5, probAway:29.5 },
+    { id:"s3", status:"scheduled", home:"JOR", away:"DZA", homeName:"Jordanie", awayName:"Algérie", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T03:00:00Z", probHome:14.8, probDraw:21.9, probAway:63.3, isDZA:true },
+    { id:"s4", status:"scheduled", home:"POR", away:"UZB", homeName:"Portugal", awayName:"Ouzbékistan", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T17:00:00Z", probHome:81.9, probDraw:12.5, probAway:5.6 },
+    { id:"s5", status:"scheduled", home:"ENG", away:"GHA", homeName:"Angleterre", awayName:"Ghana", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T20:00:00Z", probHome:80, probDraw:13.5, probAway:6.5 },
+    { id:"s6", status:"scheduled", home:"PAN", away:"CRO", homeName:"Panama", awayName:"Croatie", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T23:00:00Z", probHome:14.4, probDraw:21.7, probAway:63.9 },
+    { id:"s7", status:"scheduled", home:"COL", away:"COD", homeName:"Colombie", awayName:"Congo RD", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T02:00:00Z", probHome:62.6, probDraw:23.2, probAway:14.2 },
+    { id:"s8", status:"scheduled", home:"SUI", away:"CAN", homeName:"Suisse", awayName:"Canada", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T19:00:00Z", probHome:39.1, probDraw:30.9, probAway:30 },
+    { id:"s9", status:"scheduled", home:"BIH", away:"QAT", homeName:"Bosnie", awayName:"Qatar", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T19:00:00Z", probHome:67.1, probDraw:19.1, probAway:13.8 },
+    { id:"s10", status:"scheduled", home:"SCO", away:"BRA", homeName:"Écosse", awayName:"Brésil", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T22:00:00Z", probHome:11.5, probDraw:18.6, probAway:69.9 },
+  ]
+};
+
+/* Flags mapping */
+const FLAGS = {
+  ARG:"🇦🇷",BRA:"🇧🇷",TUR:"🇹🇷",PAR:"🇵🇾",NED:"🇳🇱",SWE:"🇸🇪",GER:"🇩🇪",CIV:"🇨🇮",
+  ECU:"🇪🇨",CUW:"🇨🇼",TUN:"🇹🇳",JPN:"🇯🇵",ESP:"🇪🇸",KSA:"🇸🇦",BEL:"🇧🇪",IRN:"🇮🇷",
+  URU:"🇺🇾",CPV:"🇨🇻",NZL:"🇳🇿",EGY:"🇪🇬",FRA:"🇫🇷",IRQ:"🇮🇶",NOR:"🇳🇴",SEN:"🇸🇳",
+  JOR:"🇯🇴",DZA:"🇩🇿",POR:"🇵🇹",UZB:"🇺🇿",ENG:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",GHA:"🇬🇭",PAN:"🇵🇦",CRO:"🇭🇷",
+  COL:"🇨🇴",COD:"🇨🇩",SUI:"🇨🇭",CAN:"🇨🇦",BIH:"🇧🇦",QAT:"🇶🇦",SCO:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",HTI:"🇭🇹",AUT:"🇦🇹",
+};
+
+/* =====================================
+   TIMEZONE (Algérie = UTC+1 fixe)
+===================================== */
+function toAlgiers(utcStr) {
+  const d = new Date(utcStr);
+  // UTC+1 : +3600 secondes
+  const alg = new Date(d.getTime() + (1 * 60 * 60 * 1000));
+  return alg;
+}
+
+function formatAlgTime(utcStr) {
+  const d = toAlgiers(utcStr);
+  const hh = String(d.getUTCHours()).padStart(2,'0');
+  const mm = String(d.getUTCMinutes()).padStart(2,'0');
+  return `${hh}:${mm}`;
+}
+
+function formatAlgDate(utcStr) {
+  const d = toAlgiers(utcStr);
+  const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const months = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  return `${days[d.getUTCDay()]} ${d.getUTCDate()} ${months[d.getUTCMonth()]}`;
+}
+
+function isToday(utcStr) {
+  const d = toAlgiers(utcStr);
+  const now = toAlgiers(new Date().toISOString());
+  return d.getUTCDate()===now.getUTCDate() && d.getUTCMonth()===now.getUTCMonth() && d.getUTCFullYear()===now.getUTCFullYear();
+}
+
+/* =====================================
+   CLOCK
+===================================== */
+function updateClock() {
+  const now = new Date();
+  const alg = new Date(now.getTime() + (1 * 60 * 60 * 1000));
+  const h = String(alg.getUTCHours()).padStart(2,'0');
+  const m = String(alg.getUTCMinutes()).padStart(2,'0');
+  const s = String(alg.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('alg-clock').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* =====================================
+   RENDER MATCH CARD
+===================================== */
+function renderCard(g) {
+  const isLive = g.status === 'in_progress';
+  const isDone = g.status === 'final';
+  const isSch  = g.status === 'scheduled';
+  const isDZA  = g.home === 'DZA' || g.away === 'DZA' || g.isDZA;
+
+  let cardClass = 'match-card';
+  if (isLive) cardClass += ' live-card';
+  if (isDZA) cardClass += ' dzalg';
+
+  const flagH = FLAGS[g.home] || '🏳️';
+  const flagA = FLAGS[g.away] || '🏳️';
+
+  let statusBadge = '';
+  if (isLive) statusBadge = `<div class="live-badge"><div class="live-dot"></div>EN DIRECT</div>`;
+  else if (isDone) statusBadge = `<span style="font-size:11px;color:var(--text3)">Terminé</span>`;
+  else if (isDZA) statusBadge = `<div class="dza-note">🇩🇿 Les Verts jouent !</div>`;
+
+  let scoreHTML = '';
+  if (isLive || isDone) {
+    scoreHTML = `<div class="score-display">${g.scoreHome}<span class="score-sep">–</span>${g.scoreAway}</div>`;
+  } else {
+    scoreHTML = `<div class="score-vs">VS</div>`;
+  }
+
+  let probaHTML = '';
+  if (isSch && g.probHome !== undefined) {
+    probaHTML = `
+      <div class="proba-bar">
+        <div class="proba-home" style="width:${g.probHome}%"></div>
+        <div class="proba-draw" style="width:${g.probDraw}%"></div>
+        <div class="proba-away" style="width:${g.probAway}%"></div>
+      </div>
+      <div class="proba-labels">
+        <span class="home-p">${g.probHome.toFixed(0)}%</span>
+        <span style="color:var(--text3)">${g.probDraw.toFixed(0)}% nul</span>
+        <span class="away-p">${g.probAway.toFixed(0)}%</span>
+      </div>`;
+  }
+
+  const timeStr = formatAlgTime(g.utcTime);
+  const dateStr = formatAlgDate(g.utcTime);
+  const todayLabel = isToday(g.utcTime) ? '<span style="color:var(--green-light);font-weight:600">Auj.</span>' : dateStr;
+
+  return `
+  <div class="${cardClass}">
+    <div class="match-meta">
+      <div class="match-datetime">
+        ${todayLabel}
+        <span style="color:var(--text3)">·</span>
+        <strong class="tz">${timeStr}</strong>
+        <span style="color:var(--text3);font-size:10px">(Alger)</span>
+      </div>
+      ${statusBadge}
+    </div>
+    <div class="match-body">
+      <div class="team-home">
+        <span class="team-flag">${flagH}</span>
+        <div class="team-name">${g.homeName || g.home}</div>
+        <div class="team-abbr">${g.home}</div>
+      </div>
+      <div class="score-block">
+        ${scoreHTML}
+        <div class="score-status">${isDone ? 'Score final' : isLive ? 'En cours' : timeStr + ' · Alger'}</div>
+      </div>
+      <div class="team-away">
+        <span class="team-flag">${flagA}</span>
+        <div class="team-name">${g.awayName || g.away}</div>
+        <div class="team-abbr">${g.away}</div>
+      </div>
+    </div>
+    ${probaHTML}
+  </div>`;
+}
+
+/* =====================================
+   LOAD & RENDER
+===================================== */
+let currentTab = 'scores';
+let data = null;
+
+function loadData() {
+  // Pour GitHub Pages (site statique), on utilise les données statiques.
+  // Pour connecter une API en temps réel, vous avez 2 options :
+  //   1. Un proxy CORS (ex: Cloudflare Worker) qui appelle api.sportradar.com
+  //   2. Un service comme allsportsapi.com ou football-data.org (clés gratuites)
+  //
+  // Décommentez et adaptez le bloc fetch() ci-dessous pour utiliser un proxy :
+  /*
+  fetch('https://VOTRE-PROXY.workers.dev/worldcup/scores')
+    .then(r => r.json())
+    .then(d => { data = transformData(d); renderAll(); })
+    .catch(e => showError(e));
+  */
+
+  // Mode demo : données statiques
+  data = STATIC_DATA;
+  document.getElementById('last-update').textContent = 
+    'Mis à jour : ' + formatAlgTime(new Date().toISOString()) + ' (Alger) · ' + formatAlgDate(new Date().toISOString());
+  renderAll();
+}
+
+function renderAll() {
+  renderScores();
+  renderUpcoming();
+  renderDZA();
+}
+
+function renderScores() {
+  const live = data.games.filter(g => g.status === 'in_progress');
+  const done = data.games.filter(g => g.status === 'final').reverse();
+
+  let html = '';
+  if (live.length) {
+    html += `<div class="section-label">🔴 En direct (${live.length})</div>`;
+    live.forEach(g => html += renderCard(g));
+  }
+  if (done.length) {
+    html += `<div class="section-label">Résultats récents</div>`;
+    done.forEach(g => html += renderCard(g));
+  }
+  if (!live.length && !done.length) html = '<div class="loading" style="padding:2rem">Aucun résultat disponible.</div>';
+  document.getElementById('panel-scores').innerHTML = html;
+}
+
+function renderUpcoming() {
+  const sch = data.games.filter(g => g.status === 'scheduled');
+  // Group by date
+  const byDate = {};
+  sch.forEach(g => {
+    const dk = formatAlgDate(g.utcTime);
+    if (!byDate[dk]) byDate[dk] = [];
+    byDate[dk].push(g);
+  });
+
+  let html = '';
+  for (const [date, games] of Object.entries(byDate)) {
+    html += `<div class="section-label">${date}</div>`;
+    games.forEach(g => html += renderCard(g));
+  }
+  if (!html) html = '<div class="loading" style="padding:2rem">Aucun match prévu.</div>';
+  document.getElementById('panel-upcoming').innerHTML = html;
+}
+
+function renderDZA() {
+  const dzaGames = data.games.filter(g => g.home === 'DZA' || g.away === 'DZA' || g.isDZA);
+  let html = '';
+  if (!dzaGames.length) {
+    html = `<div style="text-align:center;padding:3rem;color:var(--text2)">
+      <div style="font-size:48px;margin-bottom:1rem">🇩🇿</div>
+      <div style="font-size:16px;font-weight:600">Aucun match Algérie trouvé</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:0.5rem">Données à venir</div>
+    </div>`;
+  } else {
+    const done = dzaGames.filter(g => g.status === 'final');
+    const live = dzaGames.filter(g => g.status === 'in_progress');
+    const sch  = dzaGames.filter(g => g.status === 'scheduled');
+    if (live.length) { html += `<div class="section-label">🔴 En direct</div>`; live.forEach(g => html += renderCard(g)); }
+    if (sch.length)  { html += `<div class="section-label">Prochains matchs</div>`; sch.forEach(g => html += renderCard(g)); }
+    if (done.length) { html += `<div class="section-label">Résultats</div>`; done.forEach(g => html += renderCard(g)); }
+  }
+
+  // Contexte DZA
+  html += `
+  <div style="margin-top:2rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem">
+    <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:0.75rem">🇩🇿 Algérie — Groupe A</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8">
+      Prochain match : <strong style="color:var(--text)">Jordanie vs Algérie</strong><br>
+      Date/heure Alger : <strong style="color:var(--green-light)">Mar 23 juin · 04:00</strong><br>
+      (UTC 03:00 · Nuit du lundi au mardi)<br><br>
+      <span style="color:var(--text3);font-size:11px">
+        ℹ️ L'Algérie est en UTC+1 toute l'année (pas d'heure d'été).
+        Ce fuseau correspond à CET (Central European Time).
+      </span>
+    </div>
+  </div>`;
+  
+  document.getElementById('panel-dza').innerHTML = html;
+}
+
+/* =====================================
+   TABS
+===================================== */
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tabs button').forEach((b,i) => {
+    b.classList.toggle('active', ['scores','upcoming','dza'][i] === tab);
+  });
+  document.getElementById('panel-scores').style.display   = tab === 'scores'   ? '' : 'none';
+  document.getElementById('panel-upcoming').style.display = tab === 'upcoming' ? '' : 'none';
+  document.getElementById('panel-dza').style.display      = tab === 'dza'      ? '' : 'none';
+}
+
+/* =====================================
+   AUTO-REFRESH (90s)
+===================================== */
+setInterval(loadData, 90000);
+
+/* INIT */
+loadData();
+</script>
+
+</body>
+</html>
