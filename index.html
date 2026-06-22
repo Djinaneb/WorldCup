@@ -850,55 +850,98 @@ updateClock();
    --------------------------------------------------------------------- */
 
 const API_BASE = 'https://worldcup26.ir';
-let games = [];          // matchs normalisés
-let lastFetchOk = false;
+
 let usingFallback = false;
 
-function normalizeGame(raw) {
-  const homeId = String(raw.home_team_id ?? '');
-  const awayId = String(raw.away_team_id ?? '');
-  const home = TEAMS[homeId];
-  const away = TEAMS[awayId];
-  const stadium = STADIUMS[String(raw.stadium_id ?? '')];
+// function normalizeGame(raw) {
+//   const homeId = String(raw.home_team_id ?? '');
+//   const awayId = String(raw.away_team_id ?? '');
+//   const home = TEAMS[homeId];
+//   const away = TEAMS[awayId];
+//   const stadium = STADIUMS[String(raw.stadium_id ?? '')];
 
-  const utcDate = localStadiumStringToUTC(raw.local_date, stadium ? stadium.tz : null);
+//   const utcDate = localStadiumStringToUTC(raw.local_date, stadium ? stadium.tz : null);
 
-  const finished = String(raw.finished).toLowerCase() === 'true' || raw.finished === true;
-  const elapsed = (raw.time_elapsed ?? '').toString().toLowerCase();
-  const isLive = !finished && elapsed && elapsed !== 'notstarted' && elapsed !== 'not_started' && elapsed !== '';
+//   const finished = String(raw.finished).toLowerCase() === 'true' || raw.finished === true;
+//   const elapsed = (raw.time_elapsed ?? '').toString().toLowerCase();
+//   const isLive = !finished && elapsed && elapsed !== 'notstarted' && elapsed !== 'not_started' && elapsed !== '';
 
-  let status = 'scheduled';
-  if (finished) status = 'final';
-  else if (isLive) status = 'in_progress';
+//   let status = 'scheduled';
+//   if (finished) status = 'final';
+//   else if (isLive) status = 'in_progress';
 
-  const homeScore = raw.home_score === null || raw.home_score === undefined || raw.home_score === '' ? null : parseInt(raw.home_score);
-  const awayScore = raw.away_score === null || raw.away_score === undefined || raw.away_score === '' ? null : parseInt(raw.away_score);
+//   const homeScore = raw.home_score === null || raw.home_score === undefined || raw.home_score === '' ? null : parseInt(raw.home_score);
+//   const awayScore = raw.away_score === null || raw.away_score === undefined || raw.away_score === '' ? null : parseInt(raw.away_score);
+
+//   return {
+//     id: String(raw.id ?? raw._id ?? Math.random()),
+//     status,
+//     timeElapsed: elapsed,
+//     homeId, awayId,
+//     home: home ? home.fifa : (raw.home_team_label || '?'),
+//     away: away ? away.fifa : (raw.away_team_label || '?'),
+//     homeName: home ? home.name : (raw.home_team_label || 'À déterminer'),
+//     awayName: away ? away.name : (raw.away_team_label || 'À déterminer'),
+//     homeIso: home ? home.iso2 : null,
+//     awayIso: away ? away.iso2 : null,
+//     isPlaceholderHome: !home,
+//     isPlaceholderAway: !away,
+//     scoreHome: homeScore,
+//     scoreAway: awayScore,
+//     group: raw.group || (home ? home.group : null),
+//     matchday: raw.matchday,
+//     stage: (raw.type || 'group').toLowerCase(),
+//     stadiumId: String(raw.stadium_id ?? ''),
+//     stadium: stadium || null,
+//     utcDate,
+//     isDZA: homeId === ALGERIA_TEAM_ID || awayId === ALGERIA_TEAM_ID,
+//   };
+// }
+
+function normalizeOpenfootballGame(raw) {
+  // Recherche des correspondances avec ton dictionnaire TEAMS existant pour récupérer les drapeaux (iso2)
+  const homeTeamName = raw.team1;
+  const awayTeamName = raw.team2;
+  
+  let homeTeamObj = Object.values(TEAMS).find(t => t.name.toLowerCase() === homeTeamName.toLowerCase());
+  let awayTeamObj = Object.values(TEAMS).find(t => t.name.toLowerCase() === awayTeamName.toLowerCase());
+
+  // Gestion des dates (Openfootball fournit "date" au format YYYY-MM-DD et parfois "time" en heure locale)
+  // On crée une date UTC de base (à affiner selon les vrais décalages si besoin)
+  const dateStr = raw.time ? `${raw.date}T${raw.time}:00Z` : `${raw.date}T18:00:00Z`;
+  const utcDate = new Date(dateStr);
+
+  const finished = raw.score1 !== null && raw.score2 !== null;
+  let status = finished ? 'final' : 'scheduled';
+
+  // Détection automatique de l'Algérie
+  const isHomeDZA = homeTeamObj && homeTeamObj.fifa === "ALG";
+  const isAwayDZA = awayTeamObj && awayTeamObj.fifa === "ALG";
 
   return {
-    id: String(raw.id ?? raw._id ?? Math.random()),
+    id: String(raw.num || Math.random()),
     status,
-    timeElapsed: elapsed,
-    homeId, awayId,
-    home: home ? home.fifa : (raw.home_team_label || '?'),
-    away: away ? away.fifa : (raw.away_team_label || '?'),
-    homeName: home ? home.name : (raw.home_team_label || 'À déterminer'),
-    awayName: away ? away.name : (raw.away_team_label || 'À déterminer'),
-    homeIso: home ? home.iso2 : null,
-    awayIso: away ? away.iso2 : null,
-    isPlaceholderHome: !home,
-    isPlaceholderAway: !away,
-    scoreHome: homeScore,
-    scoreAway: awayScore,
-    group: raw.group || (home ? home.group : null),
-    matchday: raw.matchday,
-    stage: (raw.type || 'group').toLowerCase(),
-    stadiumId: String(raw.stadium_id ?? ''),
-    stadium: stadium || null,
+    timeElapsed: '',
+    homeId: homeTeamObj ? Object.keys(TEAMS).find(k => TEAMS[k] === homeTeamObj) : '',
+    awayId: awayTeamObj ? Object.keys(TEAMS).find(k => TEAMS[k] === awayTeamObj) : '',
+    home: homeTeamObj ? homeTeamObj.fifa : '???',
+    away: awayTeamObj ? awayTeamObj.fifa : '???',
+    homeName: homeTeamName,
+    awayName: awayTeamName,
+    homeIso: homeTeamObj ? homeTeamObj.iso2 : null,
+    awayIso: awayTeamObj ? awayTeamObj.iso2 : null,
+    isPlaceholderHome: !homeTeamObj,
+    isPlaceholderAway: !awayTeamObj,
+    scoreHome: raw.score1,
+    scoreAway: raw.score2,
+    group: raw.group || (homeTeamObj ? homeTeamObj.group : null),
+    matchday: raw.num,
+    stage: 'group',
+    stadium: null,
     utcDate,
-    isDZA: homeId === ALGERIA_TEAM_ID || awayId === ALGERIA_TEAM_ID,
+    isDZA: isHomeDZA || isAwayDZA
   };
 }
-
 async function fetchJson(path) {
   const res = await fetch(API_BASE + path, { headers: { 'Accept':'application/json' } });
   if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -916,17 +959,69 @@ function extractArray(payload) {
   return [];
 }
 
+// async function loadData(isManual) {
+//   const btn = document.getElementById('refresh-btn');
+//   if (isManual) btn.classList.add('spinning');
+//   try {
+//     const payload = await fetchJson('/get/games');
+//     const rawGames = extractArray(payload);
+//     if (!rawGames.length) throw new Error('Réponse API vide');
+
+//     games = rawGames.map(normalizeGame).filter(g => g.utcDate);
+//     lastFetchOk = true;
+//     usingFallback = false;
+
+//     document.getElementById('last-update').textContent =
+//       'Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs chargés';
+
+//     populateGroupFilter();
+//     renderAll();
+//   } catch (error) {
+//     console.error('Erreur de chargement API :', error);
+//     lastFetchOk = false;
+//     if (!games.length) {
+//       showGlobalError(error);
+//     } else {
+//       // On garde les anciennes données mais on signale l'échec du refresh
+//       document.getElementById('last-update').textContent =
+//         '⚠️ Échec de l\'actualisation (' + formatAlgTime(new Date()) + ') · données précédentes conservées';
+//     }
+//   } finally {
+//     if (isManual) btn.classList.remove('spinning');
+//   }
+// }
+const JSON_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/cup.json';
+let games = [];          
+let lastFetchOk = false;
+
+// Nouvelle fonction de chargement ultra-simple
 async function loadData(isManual) {
   const btn = document.getElementById('refresh-btn');
   if (isManual) btn.classList.add('spinning');
   try {
-    const payload = await fetchJson('/get/games');
-    const rawGames = extractArray(payload);
-    if (!rawGames.length) throw new Error('Réponse API vide');
+    const res = await fetch(JSON_URL);
+    if (!res.ok) throw new Error('Impossible de charger le fichier des matchs');
+    const payload = await res.json();
+    
+    // Openfootball structure ses données par journées ("rounds") contenant des "matches"
+    let rawGames = [];
+    if (payload.rounds) {
+      payload.rounds.forEach(round => {
+        if (round.matches) {
+          round.matches.forEach(m => {
+            // On ajoute une propriété 'stage' selon le nom du round si nécessaire
+            m.stage = round.name; 
+            rawGames.push(m);
+          });
+        }
+      });
+    }
 
-    games = rawGames.map(normalizeGame).filter(g => g.utcDate);
+    if (!rawGames.length) throw new Error('Aucun match trouvé');
+
+    // Conversion des données vers ton format existant
+    games = rawGames.map(normalizeOpenfootballGame).filter(g => g.utcDate);
     lastFetchOk = true;
-    usingFallback = false;
 
     document.getElementById('last-update').textContent =
       'Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs chargés';
@@ -934,14 +1029,13 @@ async function loadData(isManual) {
     populateGroupFilter();
     renderAll();
   } catch (error) {
-    console.error('Erreur de chargement API :', error);
+    console.error('Erreur :', error);
     lastFetchOk = false;
     if (!games.length) {
       showGlobalError(error);
     } else {
-      // On garde les anciennes données mais on signale l'échec du refresh
       document.getElementById('last-update').textContent =
-        '⚠️ Échec de l\'actualisation (' + formatAlgTime(new Date()) + ') · données précédentes conservées';
+        '⚠️ Échec de l\'actualisation (' + formatAlgTime(new Date()) + ')';
     }
   } finally {
     if (isManual) btn.classList.remove('spinning');
