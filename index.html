@@ -903,52 +903,61 @@ let usingFallback = false;
 //   };
 // }
 
-function normalizeScoreBatGame(raw) {
-  const homeTeamName = raw.side1.name;
-  const awayTeamName = raw.side2.name;
+function normalizeApiFootballGame(raw) {
+  const fixture = raw.fixture;
+  const teams = raw.teams;
+  const goals = raw.goals;
+  const league = raw.league;
 
-  // Recherche automatique des correspondances dans ton dictionnaire TEAMS
-  let homeTeamObj = Object.values(TEAMS).find(t => t.name.toLowerCase() === homeTeamName.toLowerCase());
-  let awayTeamObj = Object.values(TEAMS).find(t => t.name.toLowerCase() === awayTeamName.toLowerCase());
+  const utcDate = new Date(fixture.date);
 
-  const utcDate = new Date(raw.date);
-
-  // Détection du statut en direct via ScoreBat
+  // Détection du statut (En cours, Terminé, Programmé)
   let status = 'scheduled';
-  if (raw.isLive) status = 'in_progress';
+  const shortStatus = fixture.status.short;
   
-  // Note : ScoreBat fournit les scores dans le titre sous la forme "Équipe 1 X - Y Équipe 2"
-  // On extrait les scores dynamiquement si le match a commencé
-  let scoreHome = null;
-  let scoreAway = null;
-  const scoreMatch = raw.title.match(/(\d+)\s*-\s*(\d+)/);
-  if (scoreMatch) {
-    scoreHome = parseInt(scoreMatch[1]);
-    scoreAway = parseInt(scoreMatch[2]);
-    if (!raw.isLive) status = 'final';
+  // Statuts "Live" sur api-football : 1H, 2H, HT, ET, P, LIVE
+  if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(shortStatus)) {
+    status = 'in_progress';
+  } else if (['FT', 'AET', 'PEN'].includes(shortStatus)) {
+    status = 'final';
   }
 
+  // Extraction du groupe (ex: "Group A" -> "A")
+  let groupLetter = null;
+  if (league.round && league.round.toLowerCase().includes('group')) {
+    const match = league.round.match(/Group\s+(\w)/i);
+    if (match) groupLetter = match[1].toUpperCase();
+  }
+
+  // Vérification si l'Algérie joue (id FIFA ou nom)
+  const isDZA = teams.home.name.toLowerCase().includes('alger') || 
+                teams.away.name.toLowerCase().includes('alger') ||
+                teams.home.id === 38 || teams.away.id === 38; // Ajustez l'id si nécessaire
+
   return {
-    id: String(raw.id || Math.random()),
+    id: String(fixture.id),
     status,
-    timeElapsed: raw.isLive ? 'En cours' : '',
-    homeId: homeTeamObj ? Object.keys(TEAMS).find(k => TEAMS[k] === homeTeamObj) : '',
-    awayId: awayTeamObj ? Object.keys(TEAMS).find(k => TEAMS[k] === awayTeamObj) : '',
-    home: homeTeamObj ? homeTeamObj.fifa : '???',
-    away: awayTeamObj ? awayTeamObj.fifa : '???',
-    homeName: homeTeamName,
-    awayName: awayTeamName,
-    homeIso: homeTeamObj ? homeTeamObj.iso2 : null,
-    awayIso: awayTeamObj ? awayTeamObj.iso2 : null,
-    isPlaceholderHome: !homeTeamObj,
-    isPlaceholderAway: !awayTeamObj,
-    scoreHome: scoreHome,
-    scoreAway: scoreAway,
-    group: homeTeamObj ? homeTeamObj.group : null,
-    stage: 'group',
-    stadium: null,
+    timeElapsed: fixture.status.elapsed ? String(fixture.status.elapsed) : '',
+    homeId: String(teams.home.id),
+    awayId: String(teams.away.id),
+    home: teams.home.name.substring(0, 3).toUpperCase(), // Code 3 lettres par défaut
+    away: teams.away.name.substring(0, 3).toUpperCase(),
+    homeName: teams.home.name,
+    awayName: teams.away.name,
+    // api-football fournit directement les URLs des logos, mais pour flagcdn :
+    homeIso: teams.home.logo ? null : null, // Optionnel : associer à vos ISO
+    awayIso: teams.away.logo ? null : null,
+    homeLogoUrl: teams.home.logo, // On stocke l'URL directe d'api-football
+    awayLogoUrl: teams.away.logo,
+    isPlaceholderHome: false,
+    isPlaceholderAway: false,
+    scoreHome: goals.home,
+    scoreAway: goals.away,
+    group: groupLetter,
+    stage: groupLetter ? 'group' : 'knockout',
+    stadium: fixture.venue.name ? { name: fixture.venue.name, city: fixture.venue.city } : null,
     utcDate,
-    isDZA: (homeTeamObj && homeTeamObj.fifa === "ALG") || (awayTeamObj && awayTeamObj.fifa === "ALG")
+    isDZA: isDZA
   };
 }
 async function fetchJson(path) {
@@ -1003,9 +1012,12 @@ function extractArray(payload) {
 let games = [];          
 let lastFetchOk = false;
 
-async function loadData() {
-  const API_KEY = "Te194cd2d4c4ba83b2ed028f7a886e6b3"; // Remplace par ta vraie clé reçue sur ton tableau de bord api-football
-  const URL = "https://v3.football.api-sports.io/fixtures?league=1&season=2026";
+async function loadData(isManual) {
+  const btn = document.getElementById('refresh-btn');
+  if (isManual && btn) btn.classList.add('spinning');
+  
+  const API_KEY = "Te194cd2d4c4ba83b2ed028f7a886e6b3"; 
+  const URL = "https://v3.football.api-sports.io/fixtures?league=1&season=2026"; // Note: l'ID de la ligue Coupe du Monde sur api-football est généralement 1
 
   try {
     const response = await fetch(URL, {
@@ -1016,18 +1028,46 @@ async function loadData() {
       }
     });
 
+    if (!response.ok) throw new Error('HTTP ' + response.status);
     const data = await response.json();
     
-    // API-Football place toujours ses résultats dans un tableau appelé "response"
-    const games = data.response;
-    
-    // Appel de ta fonction qui trie ou affiche les matchs
-    updateDOM(games); 
+    if (!data.response || !data.response.length) {
+      throw new Error('Aucun match retourné par l\'API');
+    }
+
+    // On transforme les données brutes d'api-football via notre nouvelle fonction
+    games = data.response.map(normalizeApiFootballGame).filter(g => g.utcDate);
+    lastFetchOk = true;
+
+    // Mise à jour du texte de rafraîchissement
+    document.getElementById('last-update').textContent =
+      'Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs chargés';
+
+    populateGroupFilter();
+    renderAll(); 
 
   } catch (error) {
     console.error("Erreur lors du chargement des matchs:", error);
-    document.getElementById("loading").innerText = "Erreur de chargement...";
+    lastFetchOk = false;
+    if (!games.length) {
+      showGlobalError(error);
+    } else {
+      document.getElementById('last-update').textContent =
+        'Échec de l\'actualisation (' + formatAlgTime(new Date()) + ')';
+    }
+  } finally {
+    if (isManual && btn) btn.classList.remove('spinning');
   }
+}
+
+  function flagImg(iso2, alt, directUrl) {
+  if (directUrl) {
+    return `<img class="team-flag" src="${directUrl}" alt="${alt}" loading="lazy" onerror="this.style.visibility='hidden'">`;
+  }
+  if (!iso2) {
+    return `<div class="team-flag" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3)">?</div>`;
+  }
+  return `<img class="team-flag" src="https://flagcdn.com/w80/${iso2}.png" alt="${alt}" loading="lazy" onerror="this.style.visibility='hidden'">`;
 }
   
 function showGlobalError(error) {
@@ -1174,7 +1214,7 @@ function renderCard(g) {
     </div>
     <div class="match-body">
       <div class="team-home">
-        ${flagImg(g.homeIso, g.home)}
+        ${flagImg(g.homeIso, g.home, g.homeLogoUrl)}
         <div class="team-name">${g.homeName}</div>
         <div class="team-abbr">${g.isPlaceholderHome ? '' : g.home}</div>
       </div>
@@ -1183,7 +1223,7 @@ function renderCard(g) {
         <div class="score-status">${isDone ? 'Score final' : isLive ? 'En cours' : timeStr + ' · Alger'}</div>
       </div>
       <div class="team-away">
-        ${flagImg(g.awayIso, g.away)}
+        ${flagImg(g.awayIso, g.away, g.awayLogoUrl)}
         <div class="team-name">${g.awayName}</div>
         <div class="team-abbr">${g.isPlaceholderAway ? '' : g.away}</div>
       </div>
