@@ -999,48 +999,34 @@ function extractArray(payload) {
 //     if (isManual) btn.classList.remove('spinning');
 //   }
 // }
-const JSON_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/cup.json';
+// const JSON_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/cup.json';
 let games = [];          
 let lastFetchOk = false;
 
-// Nouvelle fonction de chargement ultra-simple
-async function loadData(isManual) {
-  const btn = document.getElementById('refresh-btn');
-  if (isManual && btn) btn.classList.add('spinning');
+async function loadData() {
+  const API_KEY = "Te194cd2d4c4ba83b2ed028f7a886e6b3"; // Remplace par ta vraie clé reçue sur ton tableau de bord api-football
+  const URL = "https://v3.football.api-sports.io/fixtures?league=1&season=2026";
+
   try {
-    // API en direct gratuite de ScoreBat (sans clé)
-    const res = await fetch('https://www.scorebat.com/video-api/v3/feed/');
-    if (!res.ok) throw new Error('Impossible de joindre le serveur de score en direct');
+    const response = await fetch(URL, {
+      method: "GET",
+      headers: {
+        "x-apisports-key": API_KEY,
+        "x-rapidapi-host": "v3.football.api-sports.io"
+      }
+    });
+
+    const data = await response.json();
     
-    const data = await res.json();
-    const rawGames = data.response || [];
+    // API-Football place toujours ses résultats dans un tableau appelé "response"
+    const games = data.response;
+    
+    // Appel de ta fonction qui trie ou affiche les matchs
+    updateDOM(games); 
 
-    // Filtrer pour ne garder que les matchs de la Coupe du Monde (World Cup)
-    const worldCupGames = rawGames.filter(match => 
-      match.competition.toLowerCase().includes('world cup') || 
-      match.competition.toLowerCase().includes('coupe du monde')
-    );
-
-    // Reconversion dynamique vers ton système
-    games = worldCupGames.map(normalizeScoreBatGame);
-    lastFetchOk = true;
-
-    document.getElementById('last-update').textContent =
-      'En direct - Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs trouvés';
-
-    populateGroupFilter();
-    renderAll();
   } catch (error) {
-    console.error('Erreur de flux en direct :', error);
-    lastFetchOk = false;
-    if (!games.length) {
-      showGlobalError(error);
-    } else {
-      document.getElementById('last-update').textContent =
-        '⚠️ Erreur de reconnexion (' + formatAlgTime(new Date()) + ')';
-    }
-  } finally {
-    if (isManual && btn) btn.classList.remove('spinning');
+    console.error("Erreur lors du chargement des matchs:", error);
+    document.getElementById("loading").innerText = "Erreur de chargement...";
   }
 }
   
