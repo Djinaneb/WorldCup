@@ -1008,16 +1008,78 @@ function extractArray(payload) {
 //     if (isManual) btn.classList.remove('spinning');
 //   }
 // }
-// const JSON_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/cup.json';
+/* ---------------------------------------------------------------------
+   4) APPEL API + NORMALISATION DES MATCHS (VERSION API-FOOTBALL.COM)
+   --------------------------------------------------------------------- */
+
 let games = [];          
 let lastFetchOk = false;
+
+// Nouvelle fonction indispensable pour transformer les données d'api-football
+// vers le format attendu par votre interface (g.homeName, g.scoreHome, etc.)
+function normalizeApiFootballGame(raw) {
+  const fixture = raw.fixture;
+  const teams = raw.teams;
+  const goals = raw.goals;
+  const league = raw.league;
+
+  const utcDate = new Date(fixture.date);
+
+  // Détection du statut (En cours, Terminé, Programmé)
+  let status = 'scheduled';
+  const shortStatus = fixture.status.short;
+  
+  // Statuts considérés comme "En direct" sur api-football
+  if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(shortStatus)) {
+    status = 'in_progress';
+  } else if (['FT', 'AET', 'PEN'].includes(shortStatus)) {
+    status = 'final';
+  }
+
+  // Extraction de la lettre du groupe (ex: "Group J" -> "J")
+  let groupLetter = null;
+  if (league.round && league.round.toLowerCase().includes('group')) {
+    const match = league.round.match(/Group\s+(\w)/i);
+    if (match) groupLetter = match[1].toUpperCase();
+  }
+
+  // Vérification si l'Algérie joue (soit par son nom, soit par l'ID de l'équipe 38)
+  const isDZA = teams.home.name.toLowerCase().includes('alger') || 
+                teams.away.name.toLowerCase().includes('alger') ||
+                teams.home.id === 38 || teams.away.id === 38;
+
+  return {
+    id: String(fixture.id),
+    status,
+    timeElapsed: fixture.status.elapsed ? String(fixture.status.elapsed) : '',
+    homeId: String(teams.home.id),
+    awayId: String(teams.away.id),
+    home: teams.home.name.substring(0, 3).toUpperCase(), // Code 3 lettres par défaut
+    away: teams.away.name.substring(0, 3).toUpperCase(),
+    homeName: teams.home.name,
+    awayName: teams.away.name,
+    homeIso: null, 
+    awayIso: null,
+    homeLogoUrl: teams.home.logo, // On stocke l'URL directe du logo
+    awayLogoUrl: teams.away.logo, // On stocke l'URL directe du logo
+    isPlaceholderHome: false,
+    isPlaceholderAway: false,
+    scoreHome: goals.home,
+    scoreAway: goals.away,
+    group: groupLetter,
+    stage: groupLetter ? 'group' : 'knockout',
+    stadium: fixture.venue && fixture.venue.name ? { name: fixture.venue.name, city: fixture.venue.city } : null,
+    utcDate,
+    isDZA: isDZA
+  };
+}
 
 async function loadData(isManual) {
   const btn = document.getElementById('refresh-btn');
   if (isManual && btn) btn.classList.add('spinning');
   
   const API_KEY = "Te194cd2d4c4ba83b2ed028f7a886e6b3"; 
-  const URL = "https://v3.football.api-sports.io/fixtures?league=1&season=2026"; // Note: l'ID de la ligue Coupe du Monde sur api-football est généralement 1
+  const URL = "https://v3.football.api-sports.io/fixtures?league=1&season=2026"; 
 
   try {
     const response = await fetch(URL, {
@@ -1035,7 +1097,7 @@ async function loadData(isManual) {
       throw new Error('Aucun match retourné par l\'API');
     }
 
-    // On transforme les données brutes d'api-football via notre nouvelle fonction
+    // CORRECT : On modifie la variable globale et on applique la normalisation
     games = data.response.map(normalizeApiFootballGame).filter(g => g.utcDate);
     lastFetchOk = true;
 
@@ -1044,7 +1106,7 @@ async function loadData(isManual) {
       'Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs chargés';
 
     populateGroupFilter();
-    renderAll(); 
+    renderAll(); // CORRECT : On appelle la fonction globale qui dessine les onglets
 
   } catch (error) {
     console.error("Erreur lors du chargement des matchs:", error);
@@ -1053,21 +1115,11 @@ async function loadData(isManual) {
       showGlobalError(error);
     } else {
       document.getElementById('last-update').textContent =
-        'Échec de l\'actualisation (' + formatAlgTime(new Date()) + ')';
+        '⚠️ Échec de l\'actualisation (' + formatAlgTime(new Date()) + ')';
     }
   } finally {
     if (isManual && btn) btn.classList.remove('spinning');
   }
-}
-
-  function flagImg(iso2, alt, directUrl) {
-  if (directUrl) {
-    return `<img class="team-flag" src="${directUrl}" alt="${alt}" loading="lazy" onerror="this.style.visibility='hidden'">`;
-  }
-  if (!iso2) {
-    return `<div class="team-flag" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3)">?</div>`;
-  }
-  return `<img class="team-flag" src="https://flagcdn.com/w80/${iso2}.png" alt="${alt}" loading="lazy" onerror="this.style.visibility='hidden'">`;
 }
   
 function showGlobalError(error) {
@@ -1075,11 +1127,11 @@ function showGlobalError(error) {
     <div class="error-msg">
       <strong>Impossible de charger les données en direct.</strong><br>
       ${error.message || error}<br><br>
-      Vérifiez votre connexion, ou que l'API <a href="https://worldcup26.ir/get/games" target="_blank" style="color:#ff8a80;text-decoration:underline">worldcup26.ir</a> est bien accessible (CORS / disponibilité du service).
-      Cette page n'utilise aucune donnée statique : sans réponse de l'API, aucun match ne peut être affiché.
+      Vérifiez votre clé API et la validité de votre abonnement sur <a href="https://dashboard.api-football.com/" target="_blank" style="color:#ff8a80;text-decoration:underline">api-football.com</a>.
     </div>`;
   ['panel-live','panel-upcoming','panel-dza','panel-history'].forEach(id => {
-    document.getElementById(id).innerHTML = msg;
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = msg;
   });
 }
 
@@ -1090,7 +1142,7 @@ function manualRefresh() { loadData(true); }
    --------------------------------------------------------------------- */
 
 function populateGroupFilter() {
-  const sel = document.getElementById('group-select'); // Corrigé ici
+  const sel = document.getElementById('group-select'); 
   if (!sel || sel.options.length > 1) return; 
   GROUP_LETTERS.forEach(letter => {
     const opt = document.createElement('option');
@@ -1150,12 +1202,18 @@ function renderFilterStatus(totalShown, totalAll) {
    6) RENDU DES CARTES DE MATCH
    --------------------------------------------------------------------- */
 
-function flagImg(iso2, alt) {
+// Mis à jour pour accepter directUrl fourni par l'API
+function flagImg(iso2, alt, directUrl) {
+  if (directUrl) {
+    return `<img class="team-flag" src="${directUrl}" alt="${alt}" loading="lazy" onerror="this.style.visibility='hidden'">`;
+  }
   if (!iso2) {
     return `<div class="team-flag" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3)">?</div>`;
   }
   return `<img class="team-flag" src="https://flagcdn.com/w80/${iso2}.png" alt="${alt}" loading="lazy" onerror="this.style.visibility='hidden'">`;
 }
+
+
 
 function scoreOrPenalties(g) {
   // Pas de champ pénalties standard documenté ; on affiche juste le score.
