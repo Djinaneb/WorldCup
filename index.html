@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Coupe du Monde 2026 · Heure Algérienne</title>
+<meta name="description" content="Scores en direct, calendrier et résultats de la Coupe du Monde 2026, à l'heure d'Alger. Suivez l'Algérie 🇩🇿 match par match.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
   :root {
     --green: #006233;
@@ -31,6 +33,8 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html { scroll-behavior: smooth; }
+
   body {
     font-family: 'Inter', sans-serif;
     background: var(--bg);
@@ -38,6 +42,8 @@
     min-height: 100vh;
     line-height: 1.5;
   }
+
+  a { color: inherit; }
 
   /* === HEADER === */
   header {
@@ -50,7 +56,7 @@
     padding: 0 1.5rem;
   }
   .header-inner {
-    max-width: 900px;
+    max-width: 980px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -65,8 +71,11 @@
     color: var(--gold);
     line-height: 1;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .logo span { color: var(--text2); font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 400; margin-left: 8px; letter-spacing: 0; }
+  .logo span { color: var(--text2); font-size: 13px; font-family: 'Inter', sans-serif; font-weight: 400; margin-left: 6px; letter-spacing: 0; }
   .alg-time {
     display: flex;
     align-items: center;
@@ -78,7 +87,7 @@
     font-size: 13px;
     white-space: nowrap;
   }
-  .alg-time .flag { font-size: 16px; }
+  .alg-time img { width: 18px; height: 13px; border-radius: 2px; display: block; }
   .alg-time .clock { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--gold); }
 
   /* === TABS === */
@@ -89,6 +98,9 @@
     border-bottom: 1px solid var(--border);
     padding: 0 1.5rem;
     overflow-x: auto;
+    position: sticky;
+    top: 56px;
+    z-index: 99;
   }
   .tabs button {
     background: none;
@@ -103,15 +115,80 @@
     margin-bottom: -1px;
     white-space: nowrap;
     transition: color 0.15s, border-color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .tabs button:hover { color: var(--text); }
   .tabs button.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-count {
+    background: var(--card2);
+    color: var(--text2);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .tabs button.active .tab-count { background: var(--gold); color: var(--bg); }
 
   /* === MAIN === */
   main {
-    max-width: 900px;
+    max-width: 980px;
     margin: 0 auto;
     padding: 1.5rem;
+  }
+
+  /* === SEARCH / FILTER BAR === */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .filter-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 160px;
+  }
+  .filter-input-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    color: var(--text3);
+    pointer-events: none;
+  }
+  .filter-bar input, .filter-bar select {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px 8px 30px;
+    border-radius: var(--radius-sm);
+    outline: none;
+  }
+  .filter-bar select { padding-left: 10px; cursor: pointer; }
+  .filter-bar input::placeholder { color: var(--text3); }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: var(--green-light); }
+  .filter-clear {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .filter-clear:hover { color: var(--text); }
+  .filter-status {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 0.5rem;
   }
 
   /* === LOADING === */
@@ -172,6 +249,7 @@
     height: 1px;
     background: var(--border);
   }
+  .section-label:first-child { padding-top: 0.25rem; }
 
   .match-card {
     background: var(--card);
@@ -199,9 +277,21 @@
     margin-bottom: 10px;
     font-size: 12px;
     color: var(--text3);
+    gap: 8px;
+    flex-wrap: wrap;
   }
-  .match-datetime { display: flex; align-items: center; gap: 6px; }
-  .match-datetime .tz { color: var(--green-light); font-weight: 500; }
+  .match-datetime { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .match-datetime .tz { color: var(--green-light); font-weight: 600; }
+  .match-venue { font-size: 10.5px; color: var(--text3); }
+  .match-group-tag {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gold);
+    background: rgba(200,168,75,0.1);
+    padding: 1px 7px;
+    border-radius: 4px;
+    border: 1px solid rgba(200,168,75,0.25);
+  }
 
   .match-body {
     display: grid;
@@ -209,15 +299,23 @@
     align-items: center;
     gap: 1rem;
   }
-  .team-home { text-align: right; }
-  .team-away { text-align: left; }
+  .team-home { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
+  .team-away { text-align: left; display: flex; flex-direction: column; align-items: flex-start; }
 
-  .team-flag { font-size: 28px; line-height: 1; display: block; }
+  .team-flag {
+    width: 36px;
+    height: 26px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+    background: var(--card2);
+  }
   .team-name {
     font-size: 13px;
     font-weight: 600;
     color: var(--text);
-    margin-top: 4px;
+    margin-top: 6px;
     white-space: nowrap;
   }
   .team-abbr { color: var(--text2); font-size: 11px; font-weight: 400; }
@@ -237,28 +335,14 @@
     font-weight: 500;
     padding: 0 4px;
   }
-  .score-status { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .score-status { font-size: 11px; color: var(--text3); margin-top: 4px; white-space: nowrap; }
 
-  /* proba bar */
-  .proba-bar {
-    margin-top: 12px;
-    display: flex;
-    border-radius: 4px;
-    overflow: hidden;
-    height: 4px;
+  .penalty-note {
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--gold);
+    margin-top: 6px;
   }
-  .proba-home { background: var(--green-light); }
-  .proba-draw { background: var(--text3); }
-  .proba-away { background: var(--gold); }
-  .proba-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: var(--text3);
-    margin-top: 4px;
-  }
-  .proba-labels .home-p { color: var(--green-light); }
-  .proba-labels .away-p { color: var(--gold); }
 
   /* DZA highlight */
   .dza-note {
@@ -276,57 +360,44 @@
     border-radius: 4px;
   }
 
-  /* Standings */
+  .stage-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Standings / groups */
   .standings-group {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
   .standings-group-header {
     background: var(--card2);
     padding: 10px 1rem;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--gold);
     text-transform: uppercase;
     letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
   }
-  .standings-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  .standings-table th {
-    padding: 6px 12px;
-    text-align: right;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text3);
-    border-bottom: 1px solid var(--border);
-  }
-  .standings-table th:first-child { text-align: left; }
-  .standings-table td {
-    padding: 10px 12px;
-    text-align: right;
-    border-bottom: 1px solid rgba(0,200,80,0.05);
-  }
-  .standings-table td:first-child { text-align: left; }
-  .standings-table tr:last-child td { border-bottom: none; }
-  .standings-table tr.dza-row td { color: var(--gold-light); }
-  .rank-num { color: var(--text3); font-size: 12px; margin-right: 6px; }
-  .qual-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--green-light);
-    margin-right: 4px;
-    vertical-align: middle;
-  }
-  .qual-dot.elim { background: var(--red); }
+  .standings-group-header .chevron { transition: transform 0.15s; color: var(--text3); }
+  .standings-group.collapsed .chevron { transform: rotate(-90deg); }
+  .standings-group.collapsed .group-matches { display: none; }
+  .group-matches { padding: 0.5rem 0.75rem 0.75rem; }
+  .group-matches .match-card { margin-bottom: 6px; }
+  .group-matches .match-card:last-child { margin-bottom: 0; }
 
-  /* Refresh button */
+  /* Refresh / top bar */
   .refresh-btn {
     display: flex;
     align-items: center;
@@ -341,19 +412,23 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background 0.15s;
+    white-space: nowrap;
   }
   .refresh-btn:hover { background: var(--card2); }
+  .refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
   .refresh-btn svg { width: 14px; height: 14px; }
 
   .top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
   .last-update { font-size: 11px; color: var(--text3); }
 
-  /* Error */
+  /* Error / empty states */
   .error-msg {
     background: rgba(193,18,31,0.1);
     border: 1px solid rgba(193,18,31,0.3);
@@ -362,16 +437,61 @@
     color: #ff8a80;
     font-size: 13px;
     margin: 1rem 0;
+    line-height: 1.6;
   }
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text2);
+  }
+  .empty-state .emoji { font-size: 40px; margin-bottom: 1rem; }
+  .empty-state .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .empty-state .sub { font-size: 12.5px; color: var(--text3); margin-top: 0.4rem; }
+
+  /* DZA hero context box */
+  .dza-context {
+    margin-top: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+  .dza-context .title { font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 0.75rem; }
+  .dza-context .body { font-size: 12.5px; color: var(--text2); line-height: 1.8; }
+  .dza-context .hl { color: var(--text); font-weight: 600; }
+  .dza-context .green { color: var(--green-light); font-weight: 600; }
+
+  /* timezone info note */
+  .tz-note {
+    font-size: 10.5px;
+    color: var(--text3);
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    line-height: 1.7;
+  }
+  .tz-note a { color: var(--green-light); text-decoration: none; }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 2rem 1rem 3rem;
+  }
+  footer a { color: var(--text2); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
 
   /* Responsive */
   @media (max-width: 600px) {
-    .team-flag { font-size: 22px; }
+    .team-flag { width: 28px; height: 20px; }
     .score-display { font-size: 28px; }
-    .team-name { font-size: 12px; }
+    .team-name { font-size: 11.5px; }
     .logo span { display: none; }
     .alg-time { padding: 6px 8px; font-size: 12px; }
     main { padding: 1rem; }
+    .tabs { top: 56px; }
+    .filter-bar { flex-direction: column; }
   }
 </style>
 </head>
@@ -381,23 +501,32 @@
   <div class="header-inner">
     <div class="logo">⚽ CdM 2026 <span>Heure Algérienne</span></div>
     <div class="alg-time">
-      <span class="flag">🇩🇿</span>
+      <img src="https://flagcdn.com/w40/dz.png" alt="DZ" width="18" height="13">
       <span class="clock" id="alg-clock">--:--:--</span>
-      <span style="color:var(--text3);font-size:11px">CET+1</span>
+      <span style="color:var(--text3);font-size:10.5px">UTC+1</span>
     </div>
   </div>
 </header>
 
 <div class="tabs">
-  <button class="active" onclick="switchTab('scores')">Scores &amp; Direct</button>
-  <button onclick="switchTab('upcoming')">Matchs à venir</button>
-  <button onclick="switchTab('dza')">🇩🇿 Algérie</button>
+  <button class="active" data-tab="live" onclick="switchTab('live')">
+    🔴 En direct &amp; Aujourd'hui <span class="tab-count" id="count-live">0</span>
+  </button>
+  <button data-tab="upcoming" onclick="switchTab('upcoming')">
+    📅 Matchs à venir <span class="tab-count" id="count-upcoming">0</span>
+  </button>
+  <button data-tab="dza" onclick="switchTab('dza')">
+    🇩🇿 Algérie
+  </button>
+  <button data-tab="history" onclick="switchTab('history')">
+    📜 Historique <span class="tab-count" id="count-history">0</span>
+  </button>
 </div>
 
 <main>
   <div class="top-bar">
     <span class="last-update" id="last-update">Chargement…</span>
-    <button class="refresh-btn" onclick="loadData()">
+    <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
         <path d="M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
@@ -407,7 +536,23 @@
     </button>
   </div>
 
-  <div id="panel-scores">
+  <div class="filter-bar" id="filter-bar">
+    <div class="filter-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="search-team" placeholder="Rechercher une équipe (ex: Brésil, Algérie...)" oninput="onFilterChange()">
+    </div>
+    <div class="filter-input-wrap" style="flex:0 0 170px;min-width:140px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <input type="date" id="search-date" oninput="onFilterChange()">
+    </div>
+    <select id="search-group" onchange="onFilterChange()" style="flex:0 0 110px">
+      <option value="">Tous groupes</option>
+    </select>
+    <button class="filter-clear" onclick="clearFilters()">Effacer</button>
+  </div>
+  <div class="filter-status" id="filter-status" style="display:none"></div>
+
+  <div id="panel-live">
     <div class="loading"><div class="spinner"></div>Chargement des matchs…</div>
   </div>
   <div id="panel-upcoming" style="display:none">
@@ -416,310 +561,683 @@
   <div id="panel-dza" style="display:none">
     <div class="loading"><div class="spinner"></div>Chargement…</div>
   </div>
+  <div id="panel-history" style="display:none">
+    <div class="loading"><div class="spinner"></div>Chargement…</div>
+  </div>
+
+  <div class="tz-note">
+    🕐 Tous les horaires affichés sont convertis automatiquement en <strong>heure d'Algérie (UTC+1, fixe toute l'année — pas d'heure d'été)</strong>,
+    quel que soit le fuseau horaire du stade aux États-Unis, au Mexique ou au Canada (jusqu'à 9h de décalage).<br>
+    Données fournies par <a href="https://worldcup26.ir" target="_blank" rel="noopener">worldcup26.ir</a> — actualisation automatique toutes les 60 secondes.
+  </div>
 </main>
 
+<footer>
+  ⚽ Coupe du Monde FIFA 2026 — USA 🇺🇸 · Mexique 🇲🇽 · Canada 🇨🇦 — Site non officiel, à titre informatif uniquement.
+</footer>
+
 <script>
-/* =====================================
-   CONFIG
-===================================== */
-const API_KEY = ''; // Laissé vide – voir note ci-dessous (mode demo / CORS proxy)
-const TZ_DZA = 'Africa/Algiers'; // UTC+1 (CET, pas de changement horaire en été)
-// L'Algérie est officiellement CET toute l'année (pas d'heure d'été)
-// UTC+1 en permanence
+/* =====================================================================
+   COUPE DU MONDE 2026 — Heure Algérienne
+   Données réelles via l'API publique worldcup26.ir
+   ===================================================================== */
 
-/* =====================================
-   DONNÉES STATIQUES (mise à jour manuelle ou via proxy)
-   Remplissez avec vos données ou connectez un proxy CORS.
-   Source: api.sportradar.com/soccer/trial/v4/
-===================================== */
+/* ---------------------------------------------------------------------
+   1) RÉFÉRENTIEL STATIQUE (équipes, groupes, stades)
+   Ces données ne changent pas pendant le tournoi : elles servent à
+   enrichir les matchs reçus de l'API (qui ne renvoie que des IDs).
+   Source: football.teams.json / football.stadiums.json du dépôt
+   rezarahiminia/worldcup2026 (même éditeur que l'API).
+   --------------------------------------------------------------------- */
 
-// Données pré-chargées (snapshot actuel – à remplacer par appel API via proxy si besoin)
-const STATIC_DATA = {
-  lastUpdate: new Date().toISOString(),
-  games: [
-    // EN COURS
-    { id:"live1", status:"in_progress", home:"ARG", away:"AUT", homeName:"Argentine", awayName:"Autriche", scoreHome:1, scoreAway:0, utcTime:"2026-06-22T17:00:00Z" },
-    // TERMINÉS (récents)
-    { id:"f1", status:"final", home:"BRA", away:"HTI", homeName:"Brésil", awayName:"Haïti", scoreHome:3, scoreAway:0, utcTime:"2026-06-20T00:30:00Z" },
-    { id:"f2", status:"final", home:"TUR", away:"PAR", homeName:"Turquie", awayName:"Paraguay", scoreHome:0, scoreAway:1, utcTime:"2026-06-20T03:00:00Z" },
-    { id:"f3", status:"final", home:"NED", away:"SWE", homeName:"Pays-Bas", awayName:"Suède", scoreHome:5, scoreAway:1, utcTime:"2026-06-20T17:00:00Z" },
-    { id:"f4", status:"final", home:"GER", away:"CIV", homeName:"Allemagne", awayName:"Côte d'Ivoire", scoreHome:2, scoreAway:1, utcTime:"2026-06-20T20:00:00Z" },
-    { id:"f5", status:"final", home:"ECU", away:"CUW", homeName:"Équateur", awayName:"Curaçao", scoreHome:0, scoreAway:0, utcTime:"2026-06-21T00:00:00Z" },
-    { id:"f6", status:"final", home:"TUN", away:"JPN", homeName:"Tunisie", awayName:"Japon", scoreHome:0, scoreAway:4, utcTime:"2026-06-21T04:00:00Z" },
-    { id:"f7", status:"final", home:"ESP", away:"KSA", homeName:"Espagne", awayName:"Arabie Saoudite", scoreHome:4, scoreAway:0, utcTime:"2026-06-21T16:00:00Z" },
-    { id:"f8", status:"final", home:"BEL", away:"IRN", homeName:"Belgique", awayName:"Iran", scoreHome:0, scoreAway:0, utcTime:"2026-06-21T19:00:00Z" },
-    { id:"f9", status:"final", home:"URU", away:"CPV", homeName:"Uruguay", awayName:"Cap-Vert", scoreHome:2, scoreAway:2, utcTime:"2026-06-21T22:00:00Z" },
-    { id:"f10", status:"final", home:"NZL", away:"EGY", homeName:"Nouvelle-Zélande", awayName:"Égypte", scoreHome:1, scoreAway:3, utcTime:"2026-06-22T01:00:00Z" },
-    // À VENIR
-    { id:"s1", status:"scheduled", home:"FRA", away:"IRQ", homeName:"France", awayName:"Irak", scoreHome:null, scoreAway:null, utcTime:"2026-06-22T21:00:00Z", probHome:90.1, probDraw:7.1, probAway:2.8 },
-    { id:"s2", status:"scheduled", home:"NOR", away:"SEN", homeName:"Norvège", awayName:"Sénégal", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T00:00:00Z", probHome:43, probDraw:27.5, probAway:29.5 },
-    { id:"s3", status:"scheduled", home:"JOR", away:"DZA", homeName:"Jordanie", awayName:"Algérie", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T03:00:00Z", probHome:14.8, probDraw:21.9, probAway:63.3, isDZA:true },
-    { id:"s4", status:"scheduled", home:"POR", away:"UZB", homeName:"Portugal", awayName:"Ouzbékistan", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T17:00:00Z", probHome:81.9, probDraw:12.5, probAway:5.6 },
-    { id:"s5", status:"scheduled", home:"ENG", away:"GHA", homeName:"Angleterre", awayName:"Ghana", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T20:00:00Z", probHome:80, probDraw:13.5, probAway:6.5 },
-    { id:"s6", status:"scheduled", home:"PAN", away:"CRO", homeName:"Panama", awayName:"Croatie", scoreHome:null, scoreAway:null, utcTime:"2026-06-23T23:00:00Z", probHome:14.4, probDraw:21.7, probAway:63.9 },
-    { id:"s7", status:"scheduled", home:"COL", away:"COD", homeName:"Colombie", awayName:"Congo RD", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T02:00:00Z", probHome:62.6, probDraw:23.2, probAway:14.2 },
-    { id:"s8", status:"scheduled", home:"SUI", away:"CAN", homeName:"Suisse", awayName:"Canada", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T19:00:00Z", probHome:39.1, probDraw:30.9, probAway:30 },
-    { id:"s9", status:"scheduled", home:"BIH", away:"QAT", homeName:"Bosnie", awayName:"Qatar", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T19:00:00Z", probHome:67.1, probDraw:19.1, probAway:13.8 },
-    { id:"s10", status:"scheduled", home:"SCO", away:"BRA", homeName:"Écosse", awayName:"Brésil", scoreHome:null, scoreAway:null, utcTime:"2026-06-24T22:00:00Z", probHome:11.5, probDraw:18.6, probAway:69.9 },
-  ]
+const TEAMS = {
+  "1":  { fifa:"MEX", iso2:"mx", name:"Mexique",            group:"A" },
+  "2":  { fifa:"RSA", iso2:"za", name:"Afrique du Sud",      group:"A" },
+  "3":  { fifa:"KOR", iso2:"kr", name:"Corée du Sud",        group:"A" },
+  "4":  { fifa:"CZE", iso2:"cz", name:"Tchéquie",            group:"A" },
+  "5":  { fifa:"CAN", iso2:"ca", name:"Canada",              group:"B" },
+  "6":  { fifa:"BIH", iso2:"ba", name:"Bosnie-Herzégovine",  group:"B" },
+  "7":  { fifa:"QAT", iso2:"qa", name:"Qatar",               group:"B" },
+  "8":  { fifa:"SUI", iso2:"ch", name:"Suisse",               group:"B" },
+  "9":  { fifa:"BRA", iso2:"br", name:"Brésil",               group:"C" },
+  "10": { fifa:"MAR", iso2:"ma", name:"Maroc",                group:"C" },
+  "11": { fifa:"HAI", iso2:"ht", name:"Haïti",                group:"C" },
+  "12": { fifa:"SCO", iso2:"gb-sct", name:"Écosse",           group:"C" },
+  "13": { fifa:"USA", iso2:"us", name:"États-Unis",           group:"D" },
+  "14": { fifa:"PAR", iso2:"py", name:"Paraguay",             group:"D" },
+  "15": { fifa:"AUS", iso2:"au", name:"Australie",            group:"D" },
+  "16": { fifa:"TUR", iso2:"tr", name:"Turquie",              group:"D" },
+  "17": { fifa:"GER", iso2:"de", name:"Allemagne",            group:"E" },
+  "18": { fifa:"CUW", iso2:"cw", name:"Curaçao",              group:"E" },
+  "19": { fifa:"CIV", iso2:"ci", name:"Côte d'Ivoire",        group:"E" },
+  "20": { fifa:"ECU", iso2:"ec", name:"Équateur",             group:"E" },
+  "21": { fifa:"NED", iso2:"nl", name:"Pays-Bas",             group:"F" },
+  "22": { fifa:"JPN", iso2:"jp", name:"Japon",                group:"F" },
+  "23": { fifa:"SWE", iso2:"se", name:"Suède",                group:"F" },
+  "24": { fifa:"TUN", iso2:"tn", name:"Tunisie",              group:"F" },
+  "25": { fifa:"BEL", iso2:"be", name:"Belgique",             group:"G" },
+  "26": { fifa:"EGY", iso2:"eg", name:"Égypte",               group:"G" },
+  "27": { fifa:"IRN", iso2:"ir", name:"Iran",                 group:"G" },
+  "28": { fifa:"NZL", iso2:"nz", name:"Nouvelle-Zélande",     group:"G" },
+  "29": { fifa:"ESP", iso2:"es", name:"Espagne",              group:"H" },
+  "30": { fifa:"CPV", iso2:"cv", name:"Cap-Vert",             group:"H" },
+  "31": { fifa:"KSA", iso2:"sa", name:"Arabie Saoudite",      group:"H" },
+  "32": { fifa:"URU", iso2:"uy", name:"Uruguay",              group:"H" },
+  "33": { fifa:"FRA", iso2:"fr", name:"France",               group:"I" },
+  "34": { fifa:"SEN", iso2:"sn", name:"Sénégal",              group:"I" },
+  "35": { fifa:"IRQ", iso2:"iq", name:"Irak",                 group:"I" },
+  "36": { fifa:"NOR", iso2:"no", name:"Norvège",              group:"I" },
+  "37": { fifa:"ARG", iso2:"ar", name:"Argentine",            group:"J" },
+  "38": { fifa:"ALG", iso2:"dz", name:"Algérie",              group:"J" },
+  "39": { fifa:"AUT", iso2:"at", name:"Autriche",             group:"J" },
+  "40": { fifa:"JOR", iso2:"jo", name:"Jordanie",             group:"J" },
+  "41": { fifa:"POR", iso2:"pt", name:"Portugal",             group:"K" },
+  "42": { fifa:"COD", iso2:"cd", name:"RD Congo",             group:"K" },
+  "43": { fifa:"UZB", iso2:"uz", name:"Ouzbékistan",          group:"K" },
+  "44": { fifa:"COL", iso2:"co", name:"Colombie",             group:"K" },
+  "45": { fifa:"ENG", iso2:"gb-eng", name:"Angleterre",       group:"L" },
+  "46": { fifa:"CRO", iso2:"hr", name:"Croatie",              group:"L" },
+  "47": { fifa:"GHA", iso2:"gh", name:"Ghana",                group:"L" },
+  "48": { fifa:"PAN", iso2:"pa", name:"Panama",               group:"L" },
 };
 
-/* Flags mapping */
-const FLAGS = {
-  ARG:"🇦🇷",BRA:"🇧🇷",TUR:"🇹🇷",PAR:"🇵🇾",NED:"🇳🇱",SWE:"🇸🇪",GER:"🇩🇪",CIV:"🇨🇮",
-  ECU:"🇪🇨",CUW:"🇨🇼",TUN:"🇹🇳",JPN:"🇯🇵",ESP:"🇪🇸",KSA:"🇸🇦",BEL:"🇧🇪",IRN:"🇮🇷",
-  URU:"🇺🇾",CPV:"🇨🇻",NZL:"🇳🇿",EGY:"🇪🇬",FRA:"🇫🇷",IRQ:"🇮🇶",NOR:"🇳🇴",SEN:"🇸🇳",
-  JOR:"🇯🇴",DZA:"🇩🇿",POR:"🇵🇹",UZB:"🇺🇿",ENG:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",GHA:"🇬🇭",PAN:"🇵🇦",CRO:"🇭🇷",
-  COL:"🇨🇴",COD:"🇨🇩",SUI:"🇨🇭",CAN:"🇨🇦",BIH:"🇧🇦",QAT:"🇶🇦",SCO:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",HTI:"🇭🇹",AUT:"🇦🇹",
+const ALGERIA_TEAM_ID = "38";
+
+// Stades : id -> { ville, pays, fuseau IANA }
+// Le fuseau sert à reconstituer l'heure UTC exacte d'un match à partir
+// de l'heure locale du stade renvoyée par l'API.
+const STADIUMS = {
+  "1":  { name:"Estadio Azteca",            city:"Mexico City",  country:"Mexique", tz:"America/Mexico_City" },
+  "2":  { name:"Estadio Akron",             city:"Guadalajara",  country:"Mexique", tz:"America/Mexico_City" },
+  "3":  { name:"Estadio BBVA",              city:"Monterrey",    country:"Mexique", tz:"America/Monterrey"   },
+  "4":  { name:"AT&T Stadium",              city:"Dallas",       country:"États-Unis", tz:"America/Chicago" },
+  "5":  { name:"NRG Stadium",               city:"Houston",      country:"États-Unis", tz:"America/Chicago" },
+  "6":  { name:"Arrowhead Stadium",         city:"Kansas City",  country:"États-Unis", tz:"America/Chicago" },
+  "7":  { name:"Mercedes-Benz Stadium",     city:"Atlanta",      country:"États-Unis", tz:"America/New_York" },
+  "8":  { name:"Hard Rock Stadium",         city:"Miami",        country:"États-Unis", tz:"America/New_York" },
+  "9":  { name:"Gillette Stadium",          city:"Boston",       country:"États-Unis", tz:"America/New_York" },
+  "10": { name:"Lincoln Financial Field",   city:"Philadelphie", country:"États-Unis", tz:"America/New_York" },
+  "11": { name:"MetLife Stadium",           city:"New York/New Jersey", country:"États-Unis", tz:"America/New_York" },
+  "12": { name:"BMO Field",                 city:"Toronto",      country:"Canada", tz:"America/Toronto" },
+  "13": { name:"BC Place",                  city:"Vancouver",    country:"Canada", tz:"America/Vancouver" },
+  "14": { name:"Lumen Field",               city:"Seattle",      country:"États-Unis", tz:"America/Los_Angeles" },
+  "15": { name:"Levi's Stadium",            city:"San Francisco", country:"États-Unis", tz:"America/Los_Angeles" },
+  "16": { name:"SoFi Stadium",              city:"Los Angeles",  country:"États-Unis", tz:"America/Los_Angeles" },
 };
 
-/* =====================================
-   TIMEZONE (Algérie = UTC+1 fixe)
-===================================== */
-function toAlgiers(utcStr) {
-  const d = new Date(utcStr);
-  // UTC+1 : +3600 secondes
-  const alg = new Date(d.getTime() + (1 * 60 * 60 * 1000));
-  return alg;
+const GROUP_LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+
+/* Libellés des phases à élimination directe */
+const STAGE_LABELS = {
+  group: "Phase de groupes",
+  r32: "16èmes de finale (Round of 32)",
+  r16: "8èmes de finale",
+  qf: "Quarts de finale",
+  sf: "Demi-finales",
+  third: "Match pour la 3e place",
+  final: "Finale",
+};
+
+/* ---------------------------------------------------------------------
+   2) FUSEAU HORAIRE — conversion fiable vers Alger (UTC+1 fixe, CET,
+   pas d'heure d'été en Algérie toute l'année).
+   On calcule l'offset réel (avec DST) du fuseau du stade à la date du
+   match grâce à Intl, puis on déduit l'UTC exact, puis +1h pour Alger.
+   --------------------------------------------------------------------- */
+
+function getTzOffsetMinutes(date, timeZone) {
+  // Renvoie le décalage (en minutes, positif = en avance sur UTC)
+  // du fuseau "timeZone" à l'instant "date".
+  try {
+    const dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone, hourCycle:'h23',
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+    const parts = dtf.formatToParts(date).reduce((acc,p)=>{acc[p.type]=p.value;return acc;},{});
+    const asUTC = Date.UTC(parts.year, parts.month-1, parts.day, parts.hour, parts.minute, parts.second);
+    return (asUTC - date.getTime()) / 60000;
+  } catch(e) {
+    return 0;
+  }
 }
 
-function formatAlgTime(utcStr) {
-  const d = toAlgiers(utcStr);
-  const hh = String(d.getUTCHours()).padStart(2,'0');
-  const mm = String(d.getUTCMinutes()).padStart(2,'0');
-  return `${hh}:${mm}`;
+// "local_date" de l'API arrive au format "MM/DD/YYYY HH:mm" exprimé
+// dans l'heure locale du stade. On la transforme en vrai instant UTC.
+function localStadiumStringToUTC(localDateStr, stadiumTz) {
+  if (!localDateStr) return null;
+  // Formats vus: "06/28/2026 12:00" ou variantes avec secondes
+  const m = localDateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})/);
+  if (!m) {
+    const d = new Date(localDateStr);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const [, MM, DD, YYYY, hh, mm] = m.map(Number);
+  // Devine d'abord un offset approx (sans DST) pour une première estimée,
+  // puis raffine avec le DST réel à cette date précise.
+  const guessUTC = new Date(Date.UTC(YYYY, MM-1, DD, hh, mm));
+  const offset = getTzOffsetMinutes(guessUTC, stadiumTz || 'America/New_York');
+  return new Date(guessUTC.getTime() - offset*60000);
 }
 
-function formatAlgDate(utcStr) {
-  const d = toAlgiers(utcStr);
-  const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-  const months = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
-  return `${days[d.getUTCDay()]} ${d.getUTCDate()} ${months[d.getUTCMonth()]}`;
+const ALGIERS_OFFSET_MIN = 60; // UTC+1 fixe, toute l'année
+
+function toAlgiers(date) {
+  return new Date(date.getTime() + ALGIERS_OFFSET_MIN*60000);
 }
 
-function isToday(utcStr) {
-  const d = toAlgiers(utcStr);
-  const now = toAlgiers(new Date().toISOString());
-  return d.getUTCDate()===now.getUTCDate() && d.getUTCMonth()===now.getUTCMonth() && d.getUTCFullYear()===now.getUTCFullYear();
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function formatAlgTime(date) {
+  const a = toAlgiers(date);
+  return `${pad2(a.getUTCHours())}:${pad2(a.getUTCMinutes())}`;
 }
 
-/* =====================================
-   CLOCK
-===================================== */
+const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MONTHS_FR = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+
+function formatAlgDate(date) {
+  const a = toAlgiers(date);
+  return `${DAYS_FR[a.getUTCDay()]} ${a.getUTCDate()} ${MONTHS_FR[a.getUTCMonth()]} ${a.getUTCFullYear()}`;
+}
+function formatAlgDateShort(date) {
+  const a = toAlgiers(date);
+  return `${DAYS_FR[a.getUTCDay()]} ${a.getUTCDate()} ${MONTHS_FR[a.getUTCMonth()]}`;
+}
+function algDateKey(date) {
+  const a = toAlgiers(date);
+  return `${a.getUTCFullYear()}-${pad2(a.getUTCMonth()+1)}-${pad2(a.getUTCDate())}`;
+}
+function isSameAlgDay(d1, d2) {
+  return algDateKey(d1) === algDateKey(d2);
+}
+
+/* ---------------------------------------------------------------------
+   3) CLOCK — horloge d'Alger en direct
+   --------------------------------------------------------------------- */
 function updateClock() {
   const now = new Date();
-  const alg = new Date(now.getTime() + (1 * 60 * 60 * 1000));
-  const h = String(alg.getUTCHours()).padStart(2,'0');
-  const m = String(alg.getUTCMinutes()).padStart(2,'0');
-  const s = String(alg.getUTCSeconds()).padStart(2,'0');
-  document.getElementById('alg-clock').textContent = `${h}:${m}:${s}`;
+  const alg = toAlgiers(now);
+  document.getElementById('alg-clock').textContent =
+    `${pad2(alg.getUTCHours())}:${pad2(alg.getUTCMinutes())}:${pad2(alg.getUTCSeconds())}`;
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-/* =====================================
-   RENDER MATCH CARD
-===================================== */
+/* ---------------------------------------------------------------------
+   4) APPEL API + NORMALISATION DES MATCHS
+   --------------------------------------------------------------------- */
+
+const API_BASE = 'https://worldcup26.ir';
+let games = [];          // matchs normalisés
+let lastFetchOk = false;
+let usingFallback = false;
+
+function normalizeGame(raw) {
+  const homeId = String(raw.home_team_id ?? '');
+  const awayId = String(raw.away_team_id ?? '');
+  const home = TEAMS[homeId];
+  const away = TEAMS[awayId];
+  const stadium = STADIUMS[String(raw.stadium_id ?? '')];
+
+  const utcDate = localStadiumStringToUTC(raw.local_date, stadium ? stadium.tz : null);
+
+  const finished = String(raw.finished).toLowerCase() === 'true' || raw.finished === true;
+  const elapsed = (raw.time_elapsed ?? '').toString().toLowerCase();
+  const isLive = !finished && elapsed && elapsed !== 'notstarted' && elapsed !== 'not_started' && elapsed !== '';
+
+  let status = 'scheduled';
+  if (finished) status = 'final';
+  else if (isLive) status = 'in_progress';
+
+  const homeScore = raw.home_score === null || raw.home_score === undefined || raw.home_score === '' ? null : parseInt(raw.home_score);
+  const awayScore = raw.away_score === null || raw.away_score === undefined || raw.away_score === '' ? null : parseInt(raw.away_score);
+
+  return {
+    id: String(raw.id ?? raw._id ?? Math.random()),
+    status,
+    timeElapsed: elapsed,
+    homeId, awayId,
+    home: home ? home.fifa : (raw.home_team_label || '?'),
+    away: away ? away.fifa : (raw.away_team_label || '?'),
+    homeName: home ? home.name : (raw.home_team_label || 'À déterminer'),
+    awayName: away ? away.name : (raw.away_team_label || 'À déterminer'),
+    homeIso: home ? home.iso2 : null,
+    awayIso: away ? away.iso2 : null,
+    isPlaceholderHome: !home,
+    isPlaceholderAway: !away,
+    scoreHome: homeScore,
+    scoreAway: awayScore,
+    group: raw.group || (home ? home.group : null),
+    matchday: raw.matchday,
+    stage: (raw.type || 'group').toLowerCase(),
+    stadiumId: String(raw.stadium_id ?? ''),
+    stadium: stadium || null,
+    utcDate,
+    isDZA: homeId === ALGERIA_TEAM_ID || awayId === ALGERIA_TEAM_ID,
+  };
+}
+
+async function fetchJson(path) {
+  const res = await fetch(API_BASE + path, { headers: { 'Accept':'application/json' } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+function extractArray(payload) {
+  // L'API peut renvoyer soit un tableau direct, soit { data: [...] },
+  // soit { games: [...] } selon l'endpoint / la version.
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.games)) return payload.games;
+  if (Array.isArray(payload.matches)) return payload.matches;
+  if (payload.game) return [payload.game];
+  return [];
+}
+
+async function loadData(isManual) {
+  const btn = document.getElementById('refresh-btn');
+  if (isManual) btn.classList.add('spinning');
+  try {
+    const payload = await fetchJson('/get/games');
+    const rawGames = extractArray(payload);
+    if (!rawGames.length) throw new Error('Réponse API vide');
+
+    games = rawGames.map(normalizeGame).filter(g => g.utcDate);
+    lastFetchOk = true;
+    usingFallback = false;
+
+    document.getElementById('last-update').textContent =
+      'Mis à jour : ' + formatAlgTime(new Date()) + ' (Alger) · ' + games.length + ' matchs chargés';
+
+    populateGroupFilter();
+    renderAll();
+  } catch (error) {
+    console.error('Erreur de chargement API :', error);
+    lastFetchOk = false;
+    if (!games.length) {
+      showGlobalError(error);
+    } else {
+      // On garde les anciennes données mais on signale l'échec du refresh
+      document.getElementById('last-update').textContent =
+        '⚠️ Échec de l\'actualisation (' + formatAlgTime(new Date()) + ') · données précédentes conservées';
+    }
+  } finally {
+    if (isManual) btn.classList.remove('spinning');
+  }
+}
+
+function showGlobalError(error) {
+  const msg = `
+    <div class="error-msg">
+      <strong>Impossible de charger les données en direct.</strong><br>
+      ${error.message || error}<br><br>
+      Vérifiez votre connexion, ou que l'API <a href="https://worldcup26.ir/get/games" target="_blank" style="color:#ff8a80;text-decoration:underline">worldcup26.ir</a> est bien accessible (CORS / disponibilité du service).
+      Cette page n'utilise aucune donnée statique : sans réponse de l'API, aucun match ne peut être affiché.
+    </div>`;
+  ['panel-live','panel-upcoming','panel-dza','panel-history'].forEach(id => {
+    document.getElementById(id).innerHTML = msg;
+  });
+}
+
+function manualRefresh() { loadData(true); }
+
+/* ---------------------------------------------------------------------
+   5) FILTRES (recherche équipe / date / groupe)
+   --------------------------------------------------------------------- */
+
+function populateGroupFilter() {
+  const sel = document.getElementById('search-group');
+  if (sel.options.length > 1) return; // déjà rempli
+  GROUP_LETTERS.forEach(letter => {
+    const opt = document.createElement('option');
+    opt.value = letter;
+    opt.textContent = 'Groupe ' + letter;
+    sel.appendChild(opt);
+  });
+}
+
+function getFilters() {
+  return {
+    team: document.getElementById('search-team').value.trim().toLowerCase(),
+    date: document.getElementById('search-date').value, // YYYY-MM-DD ou ''
+    group: document.getElementById('search-group').value,
+  };
+}
+
+function matchesFilters(g, f) {
+  if (f.team) {
+    const hay = [g.homeName, g.awayName, g.home, g.away].join(' ').toLowerCase();
+    if (!hay.includes(f.team)) return false;
+  }
+  if (f.date) {
+    if (algDateKey(g.utcDate) !== f.date) return false;
+  }
+  if (f.group) {
+    if ((g.group || '').toUpperCase() !== f.group) return false;
+  }
+  return true;
+}
+
+function clearFilters() {
+  document.getElementById('search-team').value = '';
+  document.getElementById('search-date').value = '';
+  document.getElementById('search-group').value = '';
+  onFilterChange();
+}
+
+function onFilterChange() {
+  renderAll();
+}
+
+function renderFilterStatus(totalShown, totalAll) {
+  const el = document.getElementById('filter-status');
+  const f = getFilters();
+  const active = f.team || f.date || f.group;
+  if (!active) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.textContent = `🔎 ${totalShown} match(s) trouvé(s) sur ${totalAll} (filtres actifs)`;
+}
+
+/* ---------------------------------------------------------------------
+   6) RENDU DES CARTES DE MATCH
+   --------------------------------------------------------------------- */
+
+function flagImg(iso2, alt) {
+  if (!iso2) {
+    return `<div class="team-flag" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3)">?</div>`;
+  }
+  return `<img class="team-flag" src="https://flagcdn.com/w80/${iso2}.png" alt="${alt}" loading="lazy" onerror="this.style.visibility='hidden'">`;
+}
+
+function scoreOrPenalties(g) {
+  // Pas de champ pénalties standard documenté ; on affiche juste le score.
+  return '';
+}
+
 function renderCard(g) {
   const isLive = g.status === 'in_progress';
   const isDone = g.status === 'final';
   const isSch  = g.status === 'scheduled';
-  const isDZA  = g.home === 'DZA' || g.away === 'DZA' || g.isDZA;
 
   let cardClass = 'match-card';
   if (isLive) cardClass += ' live-card';
-  if (isDZA) cardClass += ' dzalg';
-
-  const flagH = FLAGS[g.home] || '🏳️';
-  const flagA = FLAGS[g.away] || '🏳️';
+  if (g.isDZA) cardClass += ' dzalg';
 
   let statusBadge = '';
-  if (isLive) statusBadge = `<div class="live-badge"><div class="live-dot"></div>EN DIRECT</div>`;
-  else if (isDone) statusBadge = `<span style="font-size:11px;color:var(--text3)">Terminé</span>`;
-  else if (isDZA) statusBadge = `<div class="dza-note">🇩🇿 Les Verts jouent !</div>`;
+  if (isLive) {
+    const elapsedLabel = g.timeElapsed && /^\d+$/.test(g.timeElapsed) ? g.timeElapsed + "'" : (g.timeElapsed || '');
+    statusBadge = `<div class="live-badge"><div class="live-dot"></div>EN DIRECT ${elapsedLabel ? '· '+elapsedLabel : ''}</div>`;
+  } else if (isDone) {
+    statusBadge = `<span style="font-size:11px;color:var(--text3);font-weight:600">Terminé</span>`;
+  } else if (g.isDZA) {
+    statusBadge = `<div class="dza-note">🇩🇿 Les Verts jouent !</div>`;
+  }
 
   let scoreHTML = '';
   if (isLive || isDone) {
-    scoreHTML = `<div class="score-display">${g.scoreHome}<span class="score-sep">–</span>${g.scoreAway}</div>`;
+    scoreHTML = `<div class="score-display">${g.scoreHome ?? 0}<span class="score-sep">–</span>${g.scoreAway ?? 0}</div>`;
   } else {
     scoreHTML = `<div class="score-vs">VS</div>`;
   }
 
-  let probaHTML = '';
-  if (isSch && g.probHome !== undefined) {
-    probaHTML = `
-      <div class="proba-bar">
-        <div class="proba-home" style="width:${g.probHome}%"></div>
-        <div class="proba-draw" style="width:${g.probDraw}%"></div>
-        <div class="proba-away" style="width:${g.probAway}%"></div>
-      </div>
-      <div class="proba-labels">
-        <span class="home-p">${g.probHome.toFixed(0)}%</span>
-        <span style="color:var(--text3)">${g.probDraw.toFixed(0)}% nul</span>
-        <span class="away-p">${g.probAway.toFixed(0)}%</span>
-      </div>`;
-  }
+  const timeStr = formatAlgTime(g.utcDate);
+  const today = isSameAlgDay(g.utcDate, new Date());
+  const dateLabel = today
+    ? '<span style="color:var(--green-light);font-weight:700">Aujourd\'hui</span>'
+    : formatAlgDateShort(g.utcDate);
 
-  const timeStr = formatAlgTime(g.utcTime);
-  const dateStr = formatAlgDate(g.utcTime);
-  const todayLabel = isToday(g.utcTime) ? '<span style="color:var(--green-light);font-weight:600">Auj.</span>' : dateStr;
+  const groupTag = g.group ? `<span class="match-group-tag">Gr. ${g.group}</span>` : (STAGE_LABELS[g.stage] ? `<span class="match-group-tag">${STAGE_LABELS[g.stage]}</span>` : '');
+  const venue = g.stadium ? `${g.stadium.name} · ${g.stadium.city}` : '';
 
   return `
   <div class="${cardClass}">
     <div class="match-meta">
       <div class="match-datetime">
-        ${todayLabel}
+        ${dateLabel}
         <span style="color:var(--text3)">·</span>
         <strong class="tz">${timeStr}</strong>
         <span style="color:var(--text3);font-size:10px">(Alger)</span>
+        ${venue ? `<span class="match-venue">· ${venue}</span>` : ''}
       </div>
-      ${statusBadge}
+      <div style="display:flex;align-items:center;gap:8px">
+        ${groupTag}
+        ${statusBadge}
+      </div>
     </div>
     <div class="match-body">
       <div class="team-home">
-        <span class="team-flag">${flagH}</span>
-        <div class="team-name">${g.homeName || g.home}</div>
-        <div class="team-abbr">${g.home}</div>
+        ${flagImg(g.homeIso, g.home)}
+        <div class="team-name">${g.homeName}</div>
+        <div class="team-abbr">${g.isPlaceholderHome ? '' : g.home}</div>
       </div>
       <div class="score-block">
         ${scoreHTML}
         <div class="score-status">${isDone ? 'Score final' : isLive ? 'En cours' : timeStr + ' · Alger'}</div>
       </div>
       <div class="team-away">
-        <span class="team-flag">${flagA}</span>
-        <div class="team-name">${g.awayName || g.away}</div>
-        <div class="team-abbr">${g.away}</div>
+        ${flagImg(g.awayIso, g.away)}
+        <div class="team-name">${g.awayName}</div>
+        <div class="team-abbr">${g.isPlaceholderAway ? '' : g.away}</div>
       </div>
     </div>
-    ${probaHTML}
   </div>`;
 }
 
-/* =====================================
-   LOAD & RENDER
-===================================== */
-let currentTab = 'scores';
-let data = null;
+function emptyState(emoji, title, sub) {
+  return `<div class="empty-state"><div class="emoji">${emoji}</div><div class="title">${title}</div><div class="sub">${sub}</div></div>`;
+}
 
-function loadData() {
-  // Pour GitHub Pages (site statique), on utilise les données statiques.
-  // Pour connecter une API en temps réel, vous avez 2 options :
-  //   1. Un proxy CORS (ex: Cloudflare Worker) qui appelle api.sportradar.com
-  //   2. Un service comme allsportsapi.com ou football-data.org (clés gratuites)
-  //
-  // Décommentez et adaptez le bloc fetch() ci-dessous pour utiliser un proxy :
-  /*
-  fetch('https://VOTRE-PROXY.workers.dev/worldcup/scores')
-    .then(r => r.json())
-    .then(d => { data = transformData(d); renderAll(); })
-    .catch(e => showError(e));
-  */
+/* ---------------------------------------------------------------------
+   7) RENDU PAR ONGLET
+   --------------------------------------------------------------------- */
 
-  // Mode demo : données statiques
-  data = STATIC_DATA;
-  document.getElementById('last-update').textContent = 
-    'Mis à jour : ' + formatAlgTime(new Date().toISOString()) + ' (Alger) · ' + formatAlgDate(new Date().toISOString());
-  renderAll();
+function applyFilters(list) {
+  const f = getFilters();
+  return list.filter(g => matchesFilters(g, f));
 }
 
 function renderAll() {
-  renderScores();
+  renderLive();
   renderUpcoming();
   renderDZA();
+  renderHistory();
+  updateTabCounts();
 }
 
-function renderScores() {
-  const live = data.games.filter(g => g.status === 'in_progress');
-  const done = data.games.filter(g => g.status === 'final').reverse();
+function updateTabCounts() {
+  const now = new Date();
+  const live = games.filter(g => g.status === 'in_progress');
+  const today = games.filter(g => g.status === 'scheduled' && isSameAlgDay(g.utcDate, now));
+  const upcoming = games.filter(g => g.status === 'scheduled');
+  const history = games.filter(g => g.status === 'final');
+
+  document.getElementById('count-live').textContent = live.length + today.length;
+  document.getElementById('count-upcoming').textContent = upcoming.length;
+  document.getElementById('count-history').textContent = history.length;
+}
+
+function renderLive() {
+  const now = new Date();
+  const all = games.filter(g => g.status === 'in_progress' || (g.status === 'scheduled' && isSameAlgDay(g.utcDate, now)));
+  const filtered = applyFilters(all);
+  renderFilterStatusIfActiveTab('live', filtered.length, all.length);
+
+  const live = filtered.filter(g => g.status === 'in_progress').sort((a,b)=>a.utcDate-b.utcDate);
+  const today = filtered.filter(g => g.status === 'scheduled').sort((a,b)=>a.utcDate-b.utcDate);
 
   let html = '';
   if (live.length) {
     html += `<div class="section-label">🔴 En direct (${live.length})</div>`;
     live.forEach(g => html += renderCard(g));
   }
-  if (done.length) {
-    html += `<div class="section-label">Résultats récents</div>`;
-    done.forEach(g => html += renderCard(g));
+  if (today.length) {
+    html += `<div class="section-label">📅 Prévus aujourd'hui (Alger) — ${formatAlgDate(now)}</div>`;
+    today.forEach(g => html += renderCard(g));
   }
-  if (!live.length && !done.length) html = '<div class="loading" style="padding:2rem">Aucun résultat disponible.</div>';
-  document.getElementById('panel-scores').innerHTML = html;
+  if (!live.length && !today.length) {
+    html = emptyState('⚽', 'Aucun match en direct ou prévu aujourd\'hui', 'Consultez l\'onglet "Matchs à venir" pour le calendrier complet.');
+  }
+  document.getElementById('panel-live').innerHTML = html;
 }
 
 function renderUpcoming() {
-  const sch = data.games.filter(g => g.status === 'scheduled');
-  // Group by date
-  const byDate = {};
-  sch.forEach(g => {
-    const dk = formatAlgDate(g.utcTime);
-    if (!byDate[dk]) byDate[dk] = [];
-    byDate[dk].push(g);
-  });
+  const all = games.filter(g => g.status === 'scheduled');
+  const filtered = applyFilters(all).sort((a,b)=>a.utcDate-b.utcDate);
+  renderFilterStatusIfActiveTab('upcoming', filtered.length, all.length);
 
   let html = '';
-  for (const [date, games] of Object.entries(byDate)) {
-    html += `<div class="section-label">${date}</div>`;
-    games.forEach(g => html += renderCard(g));
+  let lastDateKey = null;
+  filtered.forEach(g => {
+    const dk = algDateKey(g.utcDate);
+    if (dk !== lastDateKey) {
+      html += `<div class="section-label">${formatAlgDate(g.utcDate)}</div>`;
+      lastDateKey = dk;
+    }
+    html += renderCard(g);
+  });
+  if (!filtered.length) {
+    html = emptyState('📅', 'Aucun match à venir trouvé', 'Essayez d\'effacer les filtres de recherche.');
   }
-  if (!html) html = '<div class="loading" style="padding:2rem">Aucun match prévu.</div>';
   document.getElementById('panel-upcoming').innerHTML = html;
 }
 
 function renderDZA() {
-  const dzaGames = data.games.filter(g => g.home === 'DZA' || g.away === 'DZA' || g.isDZA);
+  const dzaGames = games.filter(g => g.isDZA);
+  const filtered = applyFilters(dzaGames);
+  renderFilterStatusIfActiveTab('dza', filtered.length, dzaGames.length);
+
   let html = '';
   if (!dzaGames.length) {
-    html = `<div style="text-align:center;padding:3rem;color:var(--text2)">
-      <div style="font-size:48px;margin-bottom:1rem">🇩🇿</div>
-      <div style="font-size:16px;font-weight:600">Aucun match Algérie trouvé</div>
-      <div style="font-size:13px;color:var(--text3);margin-top:0.5rem">Données à venir</div>
-    </div>`;
+    html = emptyState('🇩🇿', 'Calendrier de l\'Algérie indisponible', 'Le calendrier détaillé n\'a pas encore été publié par l\'API pour cette équipe.');
+  } else if (!filtered.length) {
+    html = emptyState('🔎', 'Aucun match Algérie ne correspond aux filtres', 'Essayez d\'effacer les filtres de recherche.');
   } else {
-    const done = dzaGames.filter(g => g.status === 'final');
-    const live = dzaGames.filter(g => g.status === 'in_progress');
-    const sch  = dzaGames.filter(g => g.status === 'scheduled');
+    const live = filtered.filter(g => g.status === 'in_progress').sort((a,b)=>a.utcDate-b.utcDate);
+    const sch  = filtered.filter(g => g.status === 'scheduled').sort((a,b)=>a.utcDate-b.utcDate);
+    const done = filtered.filter(g => g.status === 'final').sort((a,b)=>b.utcDate-a.utcDate);
     if (live.length) { html += `<div class="section-label">🔴 En direct</div>`; live.forEach(g => html += renderCard(g)); }
     if (sch.length)  { html += `<div class="section-label">Prochains matchs</div>`; sch.forEach(g => html += renderCard(g)); }
     if (done.length) { html += `<div class="section-label">Résultats</div>`; done.forEach(g => html += renderCard(g)); }
   }
 
-  // Contexte DZA
+  const nextDza = dzaGames.filter(g => g.status === 'scheduled').sort((a,b)=>a.utcDate-b.utcDate)[0];
   html += `
-  <div style="margin-top:2rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem">
-    <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:0.75rem">🇩🇿 Algérie — Groupe A</div>
-    <div style="font-size:12px;color:var(--text2);line-height:1.8">
-      Prochain match : <strong style="color:var(--text)">Jordanie vs Algérie</strong><br>
-      Date/heure Alger : <strong style="color:var(--green-light)">Mar 23 juin · 04:00</strong><br>
-      (UTC 03:00 · Nuit du lundi au mardi)<br><br>
+  <div class="dza-context">
+    <div class="title">🇩🇿 Algérie — Groupe J</div>
+    <div class="body">
+      ${nextDza ? `
+        Prochain match : <span class="hl">${nextDza.homeName} vs ${nextDza.awayName}</span><br>
+        Date/heure Alger : <span class="green">${formatAlgDate(nextDza.utcDate)} · ${formatAlgTime(nextDza.utcDate)}</span><br>
+      ` : `Aucun prochain match programmé pour le moment.<br>`}
       <span style="color:var(--text3);font-size:11px">
-        ℹ️ L'Algérie est en UTC+1 toute l'année (pas d'heure d'été).
-        Ce fuseau correspond à CET (Central European Time).
+        ℹ️ L'Algérie est en UTC+1 toute l'année (pas d'heure d'été) — ce fuseau correspond à CET (Central European Time).
       </span>
     </div>
   </div>`;
-  
+
   document.getElementById('panel-dza').innerHTML = html;
 }
 
-/* =====================================
-   TABS
-===================================== */
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tabs button').forEach((b,i) => {
-    b.classList.toggle('active', ['scores','upcoming','dza'][i] === tab);
+function renderHistory() {
+  const all = games.filter(g => g.status === 'final');
+  const filtered = applyFilters(all);
+  renderFilterStatusIfActiveTab('history', filtered.length, all.length);
+
+  if (!filtered.length) {
+    document.getElementById('panel-history').innerHTML = emptyState('📜', 'Aucun résultat à afficher', 'Soit aucun match n\'est encore terminé, soit vos filtres ne correspondent à aucun résultat.');
+    return;
+  }
+
+  // Grouper par groupe (A-L), puis les phases à élimination directe à part.
+  const byGroup = {};
+  const knockout = [];
+  filtered.forEach(g => {
+    if (g.group && GROUP_LETTERS.includes(g.group.toUpperCase())) {
+      const key = g.group.toUpperCase();
+      (byGroup[key] = byGroup[key] || []).push(g);
+    } else {
+      knockout.push(g);
+    }
   });
-  document.getElementById('panel-scores').style.display   = tab === 'scores'   ? '' : 'none';
-  document.getElementById('panel-upcoming').style.display = tab === 'upcoming' ? '' : 'none';
-  document.getElementById('panel-dza').style.display      = tab === 'dza'      ? '' : 'none';
+
+  let html = '';
+  GROUP_LETTERS.forEach(letter => {
+    const list = byGroup[letter];
+    if (!list || !list.length) return;
+    list.sort((a,b)=>b.utcDate-a.utcDate);
+    html += renderGroupBlock(letter, list);
+  });
+
+  if (knockout.length) {
+    knockout.sort((a,b)=>b.utcDate-a.utcDate);
+    html += `<div class="section-label">🏆 Phase à élimination directe</div>`;
+    knockout.forEach(g => html += renderCard(g));
+  }
+
+  document.getElementById('panel-history').innerHTML = html;
+
+  // Ré-applique l'état plié/déplié précédent si présent
+  document.querySelectorAll('.standings-group').forEach(el => {
+    if (collapsedGroups.has(el.dataset.group)) el.classList.add('collapsed');
+  });
 }
 
-/* =====================================
-   AUTO-REFRESH (90s)
-===================================== */
-setInterval(loadData, 90000);
+const collapsedGroups = new Set();
+
+function renderGroupBlock(letter, list) {
+  const dzaHere = list.some(g => g.isDZA);
+  return `
+  <div class="standings-group" data-group="${letter}">
+    <div class="standings-group-header" onclick="toggleGroup('${letter}')">
+      <span>Groupe ${letter} ${dzaHere ? '🇩🇿' : ''}</span>
+      <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="group-matches">
+      ${list.map(renderCard).join('')}
+    </div>
+  </div>`;
+}
+
+function toggleGroup(letter) {
+  const el = document.querySelector(`.standings-group[data-group="${letter}"]`);
+  el.classList.toggle('collapsed');
+  if (el.classList.contains('collapsed')) collapsedGroups.add(letter);
+  else collapsedGroups.delete(letter);
+}
+
+/* Affiche le compteur de filtre uniquement sur l'onglet actif pour éviter
+   les calculs/affichages inutiles sur les panneaux cachés. */
+function renderFilterStatusIfActiveTab(tab, shown, total) {
+  if (currentTab !== tab) return;
+  renderFilterStatus(shown, total);
+}
+
+/* ---------------------------------------------------------------------
+   8) GESTION DES ONGLETS
+   --------------------------------------------------------------------- */
+
+let currentTab = 'live';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  ['live','upcoming','dza','history'].forEach(t => {
+    document.getElementById('panel-' + t).style.display = (t === tab) ? '' : 'none';
+  });
+  onFilterChange();
+}
+
+/* ---------------------------------------------------------------------
+   9) AUTO-REFRESH
+   --------------------------------------------------------------------- */
+setInterval(() => loadData(false), 60000);
 
 /* INIT */
-loadData();
+loadData(false);
+
 </script>
 
 </body>
